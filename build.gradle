@@ -12,6 +12,9 @@ repositories {
 
 dependencies {
 
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30'
+
     implementation group: 'io.vertx', name: 'vertx-core', version: '4.0.3'
     implementation group: 'io.vertx', name: 'vertx-lang-groovy', version: '4.0.3'
     implementation group: 'io.vertx', name: 'vertx-hazelcast', version: '4.0.3'
