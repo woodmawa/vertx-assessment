@@ -1,0 +1,32 @@
+plugins {
+    id 'groovy'
+    id 'java'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+    implementation group: 'io.vertx', name: 'vertx-core', version: '4.0.3'
+    implementation group: 'io.vertx', name: 'vertx-lang-groovy', version: '4.0.3'
+    implementation group: 'io.vertx', name: 'vertx-hazelcast', version: '4.0.3'
+    testImplementation group: 'io.vertx', name: 'vertx-unit', version: '4.0.3'
+
+    //rest
+    implementation 'org.codehaus.groovy:groovy-all:3.0.8'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.6.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testImplementation group: 'org.spockframework', name: 'spock-core', version: '2.0-M5-groovy-3.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+}
+
+test {
+    useJUnitPlatform()
+}
