@@ -18,6 +18,10 @@ class SimpleVertxDatastore extends AbstractVerticle {
     }
 
     void start(Future<Void> future) {
+
+        println "verticle starting "
+
+
         EventBus bus = vertx.eventBus()
         bus.<JsonObject>consumer ("simple.datastore",
                 {msg ->
@@ -31,6 +35,7 @@ class SimpleVertxDatastore extends AbstractVerticle {
 
     void stop(Future<Void> future) {
         log.info("-->Stopping Simple datastore")
+        future.complete()
     }
 
     private void getRecord (Message<JsonObject> message ) {
