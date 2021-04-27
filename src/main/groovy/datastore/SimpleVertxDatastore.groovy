@@ -3,6 +3,7 @@ package datastore
 import groovy.util.logging.Slf4j
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Future
+import io.vertx.core.Promise
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.eventbus.Message
 import io.vertx.core.json.JsonObject
@@ -14,12 +15,13 @@ class SimpleVertxDatastore extends AbstractVerticle {
     Map datastore = new HashMap()   //doesnt need to concurrent as only 1 thread will update
 
     SimpleVertxDatastore () {
-        log.debug ("using logback - started datastore")
+        println ("verticle constructor:  using logback - started datastore")
     }
 
-    void start(Future<Void> future) {
+    @Override
+    void start(Promise<Void> promise) {
 
-        log.debug "verticle SimpleVertxDatastore starting "
+        println "verticle SimpleVertxDatastore starting "
 
 
         EventBus bus = vertx.eventBus()
@@ -28,12 +30,18 @@ class SimpleVertxDatastore extends AbstractVerticle {
                     JsonObject body = msg.body()
                     String id = body.getString("id")
                     datastore[(id)] = body
-                    log.info ("stored record with key $id")
+                    println ("stored record with key $id")
+
+                    log.debug ("stored record with key $id")
                 })
+        promise.complete()
+        println ("-->Starting Simple datastore, registered listener on 'simple.datastore'")
+
         log.debug ("-->Starting Simple datastore, registered listener on 'simple.datastore'")
     }
 
-    void stop (Future<Void> future) {
+    @Override
+    void stop (Promise<Void> future) {
         log.debug ("-->Stopping Simple datastore")
         future.complete()
     }

@@ -11,11 +11,11 @@ Vertx vertx = Vertx.vertx()
 
 
 def send = {
-    println "\t>> publish first payload"
     JsonObject payload = new JsonObject ()
     payload.put("id", UUID.randomUUID().toString()).put "temp", "getting hot now"
 
-    vertx.eventBus().publish("simple.datastore", payload)
+    def res = vertx.eventBus().publish("simple.datastore", payload)
+    println "\t>> publish first payload"
 }
 
 String did
@@ -28,17 +28,17 @@ Future<String> state = vertx.deployVerticle("datastore.SimpleVertxDatastore", ar
 
         vertx.undeploy(did, aru -> {
             if (aru.succeeded()) {
-                println "\t>>undeploy vertical $did"
+                println "\t>> undeploy vertical $did"
 
             } else {
-                println "\t>>couldnt undeploy vertical $did"
+                println "\t>> couldnt undeploy vertical $did"
 
             }
         }
     )
 
     } else {
-        println "\tt>> successfully deployed ${ar.cause()}"
+        println "\tt>> failed to deploy ${ar.cause()}"
     }
 })
 

@@ -11,11 +11,11 @@ import static ch.qos.logback.classic.Level.*
 appender("Console", ConsoleAppender) {
     append = true
     encoder(PatternLayoutEncoder) {
-        pattern = "%level %logger - %msg%n"
+        pattern = "%level [%thread] %logger{0} - %msg%n"
     }
 }
 
 logger "io.netty", Level.WARN,["console"]
-logger "datastore", Level.INFO,["console"]
+logger "datastore", Level.DEBUG,["console"]
 
 root(DEBUG, ["Console"])
