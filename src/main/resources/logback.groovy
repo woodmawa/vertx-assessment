@@ -16,5 +16,6 @@ appender("Console", ConsoleAppender) {
 }
 
 logger "io.netty", Level.WARN,["console"]
+logger "datastore", Level.INFO,["console"]
 
 root(DEBUG, ["Console"])

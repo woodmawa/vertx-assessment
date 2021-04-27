@@ -7,24 +7,49 @@ import io.vertx.core.json.JsonObject
 
 Vertx vertx = Vertx.vertx()
 
-Future<String> state = vertx.deployVerticle(new datastore.SimpleVertxDatastore())
+//try and do async deploy with callback
 
-println "state of future is  ${state.result()}"
 
-def success = {
-    println "success handler called - publish first payload"
+def send = {
+    println "\t>> publish first payload"
     JsonObject payload = new JsonObject ()
-    payload.put(UUID.randomUUID().toString()).put "temp", "getting hot now"
+    payload.put("id", UUID.randomUUID().toString()).put "temp", "getting hot now"
 
     vertx.eventBus().publish("simple.datastore", payload)
 }
 
-state.onSuccess({
-    success()
+String did
+Future<String> state = vertx.deployVerticle("datastore.SimpleVertxDatastore", ar -> {
+    if (ar.succeeded()) {
+        did = ar.result()
+        println "\t>> successfully deployed $did"
+
+        send ()
+
+        vertx.undeploy(did, aru -> {
+            if (aru.succeeded()) {
+                println "\t>>undeploy vertical $did"
+
+            } else {
+                println "\t>>couldnt undeploy vertical $did"
+
+            }
+        }
+    )
+
+    } else {
+        println "\tt>> successfully deployed ${ar.cause()}"
+    }
 })
 
-state.eventually({
-    vertx.close()
-})
+//println "\t>> state of future is  ${state.result()}"
+
+
+
+
+
+
+sleep(1)
+
 
 println "stopping the script"

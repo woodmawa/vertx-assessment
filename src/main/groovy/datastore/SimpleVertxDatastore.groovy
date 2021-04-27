@@ -14,12 +14,12 @@ class SimpleVertxDatastore extends AbstractVerticle {
     Map datastore = new HashMap()   //doesnt need to concurrent as only 1 thread will update
 
     SimpleVertxDatastore () {
-        log.info ("using logback - started datastore")
+        log.debug ("using logback - started datastore")
     }
 
     void start(Future<Void> future) {
 
-        println "verticle starting "
+        log.debug "verticle SimpleVertxDatastore starting "
 
 
         EventBus bus = vertx.eventBus()
@@ -30,11 +30,11 @@ class SimpleVertxDatastore extends AbstractVerticle {
                     datastore[(id)] = body
                     log.info ("stored record with key $id")
                 })
-        log.info("-->Starting Simple datastore, registered listener on 'simple.datastore'")
+        log.debug ("-->Starting Simple datastore, registered listener on 'simple.datastore'")
     }
 
-    void stop(Future<Void> future) {
-        log.info("-->Stopping Simple datastore")
+    void stop (Future<Void> future) {
+        log.debug ("-->Stopping Simple datastore")
         future.complete()
     }
 
