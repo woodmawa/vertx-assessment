@@ -7,15 +7,25 @@ import ch.qos.logback.core.status.*
 import ch.qos.logback.classic.net.*
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder
 import static ch.qos.logback.classic.Level.*
+import static org.fusesource.jansi.Ansi.Color.*
+
+conversionRule("highlight", util.loggingConfiguration.HighlightingCompositeConverter)
 
 appender("Console", ConsoleAppender) {
-    append = true
     encoder(PatternLayoutEncoder) {
-        pattern = "%level [%thread] %logger{0} - %msg%n"
+        //logger{0} will shorten just to class name
+        pattern = "[%d{HH:mm:ss.SSS}] %cyan([%thread]) %highlight([%level]) %magenta(%logger{5}) : %msg%n"
     }
 }
 
-logger "io.netty", Level.WARN,["console"]
-logger "datastore", Level.DEBUG,["console"]
+
+logger ("io.vertx.core", WARN)
+logger ("io.netty", WARN)
+logger ("ch.qos.logback.classic", WARN)
+
+logger "datastore", DEBUG
+//logger "datastore", Level.DEBUG, ["Console"]  //causes it print it twice!
+
+
 
 root(DEBUG, ["Console"])

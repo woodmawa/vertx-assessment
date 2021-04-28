@@ -15,35 +15,40 @@ class SimpleVertxDatastore extends AbstractVerticle {
     Map datastore = new HashMap()   //doesnt need to concurrent as only 1 thread will update
 
     SimpleVertxDatastore () {
-        println ("verticle constructor:  using logback - started datastore")
+        log.debug ("verticle constructor:  using logback - started datastore")
     }
 
     @Override
     void start(Promise<Void> promise) {
 
-        println "verticle SimpleVertxDatastore starting "
+        log.debug "verticle SimpleVertxDatastore starting "
 
-
+        //abstractVerticle pre declares the vertx variable for you
         EventBus bus = vertx.eventBus()
+
+        log.debug "registering listener on 'simple.datastore' with callback handler "
         bus.<JsonObject>consumer ("simple.datastore",
                 {msg ->
+
+                    log.debug ("consumer: received message from eventBus  $msg")
+
                     JsonObject body = msg.body()
                     String id = body.getString("id")
                     datastore[(id)] = body
-                    println ("stored record with key $id")
 
-                    log.debug ("stored record with key $id")
+                    log.debug ("consumer: stored record with key $id, #messages stored now: ${datastore.size()}")
                 })
-        promise.complete()
-        println ("-->Starting Simple datastore, registered listener on 'simple.datastore'")
 
+        //mark the promise as complete
+        promise.complete()
         log.debug ("-->Starting Simple datastore, registered listener on 'simple.datastore'")
     }
 
     @Override
-    void stop (Promise<Void> future) {
+    void stop (Promise<Void> promise) {
         log.debug ("-->Stopping Simple datastore")
-        future.complete()
+        log.debug "datastore now contains: $datastore"
+        promise.complete()
     }
 
     private void getRecord (Message<JsonObject> message ) {
