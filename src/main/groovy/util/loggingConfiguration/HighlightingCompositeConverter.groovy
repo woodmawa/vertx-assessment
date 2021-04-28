@@ -10,7 +10,7 @@ import static ch.qos.logback.core.pattern.color.ANSIConstants.*;
  *
  *  requires jansi library on Windows classpath
  *
- *  takes the log level and returns the colour code to render on Ansi enabled appender output 
+ *  takes the log level and returns the colour code to render on Ansi enabled appender output
  */
 class HighlightingCompositeConverter extends ForegroundCompositeConverterBase<ILoggingEvent> {
 
