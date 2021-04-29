@@ -47,13 +47,20 @@ Future<String> state = vertx.deployVerticle("datastore.SimpleVertxDatastore", ar
         //undeploy (did) //seems to erro and say verticle was undeployed !
 
         //needed to close vertx to exit gracefully
-        vertx.close()
+        //vertx.close()
 
 
     } else {
         log.debug "\tt>> failed to deploy ${ar.cause()}"
     }
 })
+
+def tid = vertx.setTimer (2000, timerIdArg-> {
+    println "in timer handler, got timer id $timerIdArg, now closing vertx"
+    //undeploy (did)
+    vertx.close()
+})
+println "setTimer returned timer id $tid"
 
 
 
