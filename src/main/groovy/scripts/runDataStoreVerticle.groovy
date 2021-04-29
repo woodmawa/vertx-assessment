@@ -28,7 +28,7 @@ def undeploy = {did ->
             log.debug "\t>> undeploy vertical $did"
 
         } else {
-            log.debug "\t>> couldnt undeploy vertical $did"
+            log.error "\t>> couldnt undeploy vertical $did"
 
         }
     })
@@ -51,13 +51,12 @@ Future<String> state = vertx.deployVerticle("datastore.SimpleVertxDatastore", ar
 
 
     } else {
-        log.debug "\tt>> failed to deploy ${ar.cause()}"
+        log.error "\tt>> failed to deploy ${ar.cause()}"
     }
 })
 
 def tid = vertx.setTimer (2000, timerIdArg-> {
-    println "in timer handler, got timer id $timerIdArg, now closing vertx"
-    //undeploy (did)
+    log.debug "*** in timer handler: got timer id $timerIdArg, now closing vertx"
     vertx.close()
 })
 println "setTimer returned timer id $tid"
