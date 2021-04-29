@@ -1,6 +1,7 @@
 package scripts
 
 import datastore.SimpleVertxDatastore
+import io.vertx.core.Context
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
@@ -61,6 +62,8 @@ def tid = vertx.setTimer (2000, timerIdArg-> {
 })
 println "setTimer returned timer id $tid"
 
+Context ctx = vertx.getOrCreateContext()
+ctx.runOnContext(v -> log.info ("\tscript: runOnCtx: running task via context "))
 
 
 println ">>stopping the script"
