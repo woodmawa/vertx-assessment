@@ -39,6 +39,9 @@ class SimpleVertxDatastore extends AbstractVerticle {
                     log.debug ("consumer: stored record with key $id, #messages stored now: ${datastore.size()}")
                 })
 
+        //register for queries - request - response
+        bus.<JsonObject>consumer ("simple.datastore.query", this::getRecord() )
+
         //mark the promise as complete
         promise.complete()
         log.debug ("-->Starting Simple datastore, registered listener on 'simple.datastore'")
@@ -55,7 +58,7 @@ class SimpleVertxDatastore extends AbstractVerticle {
         JsonObject body = message.body()
         String id = body.getString("id")
 
-
+        //reply response to
         JsonObject record = datastore.id
         message.reply(record)
 

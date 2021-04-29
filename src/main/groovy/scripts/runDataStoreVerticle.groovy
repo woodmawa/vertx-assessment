@@ -14,13 +14,22 @@ Vertx vertx = Vertx.vertx()
 
 //try and do async deploy with callback
 
-
+def recordId
 def send = {
     JsonObject payload = new JsonObject ()
-    payload.put("id", UUID.randomUUID().toString()).put "temp", "getting hot now"
+    recordId = UUID.randomUUID().toString()
+    payload.put("id", recordId).put "temp", "getting hot now"
 
     def res = vertx.eventBus().publish("simple.datastore", payload)
     log.debug "\t>> publish first payload"
+}
+
+def query = {recId ->
+    JsonObject queryPayload = new JsonObject ()
+    queryPayload.put "id", recId
+
+    def res = vertx.eventBus().request("simple.datastore.query", queryPayload)
+    log.debug "\t>> send query payload, got $res"
 }
 
 def undeploy = {did ->
@@ -44,6 +53,8 @@ Future<String> state = vertx.deployVerticle("datastore.SimpleVertxDatastore", ar
         log.debug "\t>> successfully deployed $did"
 
         send ()
+
+        query (recordId)
 
         //undeploy (did) //seems to erro and say verticle was undeployed !
 
