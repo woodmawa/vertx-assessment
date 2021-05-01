@@ -4,6 +4,7 @@ import datastore.SimpleVertxDatastore
 import io.vertx.core.Context
 import io.vertx.core.Future
 import io.vertx.core.Vertx
+import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.json.JsonObject
 
 //setup script logging
@@ -28,8 +29,19 @@ def query = {recId ->
     JsonObject queryPayload = new JsonObject ()
     queryPayload.put "id", recId
 
-    def res = vertx.eventBus().request("simple.datastore.query", queryPayload)
-    log.debug "\t>> send query payload, got $res"
+    DeliveryOptions sndOptions = new DeliveryOptions()
+    sndOptions.addHeader("action", "query")
+
+    //using send - only one registered consumer will get the message
+    //using publish - all consumers would be triggered
+    def res = vertx.eventBus().request ("simple.datastore.query", queryPayload, sndOptions, ar -> {
+        if (ar.succeeded()) {
+            log.info ("query: send request, received reply : " + ar.result().body() )
+        } else {
+            log.error "query: request failed, reason : " + ar.cause().getMessage()
+        }
+    })
+    //log.debug "\t>> sent query payload, got $res"
 }
 
 def undeploy = {did ->
@@ -63,7 +75,7 @@ Future<String> state = vertx.deployVerticle("datastore.SimpleVertxDatastore", ar
 
 
     } else {
-        log.error "\tt>> failed to deploy ${ar.cause()}"
+        log.error "\t>> failed to deploy SimpleVertxDatastore, reason ${ar.cause()}"
     }
 })
 

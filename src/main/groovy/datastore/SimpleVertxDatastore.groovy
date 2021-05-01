@@ -6,7 +6,9 @@ import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.eventbus.Message
+import io.vertx.core.http.impl.headers.HeadersMultiMap
 import io.vertx.core.json.JsonObject
+import io.vertx.core.Handler
 
 //Simple service to receive a message on thread and store the result with index key
 @Slf4j
@@ -40,7 +42,9 @@ class SimpleVertxDatastore extends AbstractVerticle {
                 })
 
         //register for queries - request - response
-        bus.<JsonObject>consumer ("simple.datastore.query", this::getRecord() )
+        log.debug "registering query listener on 'simple.datastore.query' with callback handler getRecord() "
+        //Handler<Message> handler = this::getRecord<Message<JsonObject>>
+        bus.<JsonObject>consumer ("simple.datastore.query", this::getRecord )
 
         //mark the promise as complete
         promise.complete()
@@ -55,12 +59,26 @@ class SimpleVertxDatastore extends AbstractVerticle {
     }
 
     private void getRecord (Message<JsonObject> message ) {
+        if (message == null) {
+            log.error "getRecord received a null message "
+            return
+        }
         JsonObject body = message.body()
-        String id = body.getString("id")
+        HeadersMultiMap headers = message.headers()
 
-        //reply response to
-        JsonObject record = datastore.id
-        message.reply(record)
+        log.info "getRecord: with message headers $headers"
+        JsonObject record = new JsonObject()
+        if (body) {
+            String id = body.getString("id")
+
+            //reply response to
+            record[id] = datastore.getOrDefault(id, "cant find any entry for $id")
+            message.reply(record)
+        } else {
+            record['error'] = "error processing getRecord "
+            message.reply(record)
+        }
+
 
     }
 }
