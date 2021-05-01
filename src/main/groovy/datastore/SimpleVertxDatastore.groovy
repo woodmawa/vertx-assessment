@@ -66,7 +66,7 @@ class SimpleVertxDatastore extends AbstractVerticle {
         JsonObject body = message.body()
         HeadersMultiMap headers = message.headers()
 
-        log.info "getRecord: with message headers $headers"
+        log.info "getRecord: with message headers : $headers"
         JsonObject record = new JsonObject()
         if (body) {
             String id = body.getString("id")
