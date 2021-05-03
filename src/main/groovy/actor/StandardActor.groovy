@@ -56,19 +56,19 @@ class StandardActor extends AbstractVerticle implements Actor {
     }
 
     private void reply (Message<JsonObject> message) {
-        def body = message.body()
+        JsonObject body = message.body()
+        Map bodyMap = body.getMap()
 
-        switch (action.maximumNumberOfParameters) {
-            case 0:
-                message.reply(action())
-                return
-            case 1:
-                message.reply (action (body))
-                return
-            default :
-                message.reply (action (*body))
+        if (action.maximumNumberOfParameters == 0) {
+            message.reply(action())
+            return
+        } else if (action.maximumNumberOfParameters == 1) {
+            message.reply (action (bodyMap))
+            return
+        } else if (action.maximumNumberOfParameters > 1) {
+            message.reply (action (*body))
+            return
         }
-
 
     }
 }
