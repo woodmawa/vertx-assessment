@@ -3,7 +3,9 @@ package actor
 import groovy.util.logging.Slf4j
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.Promise
+import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.Message
+import io.vertx.core.eventbus.MessageConsumer
 import io.vertx.core.json.JsonObject
 
 import java.util.function.Function
@@ -13,6 +15,8 @@ class StandardActor extends AbstractVerticle implements Actor {
 
     private Optional<String> name = Optional.of ("Un-Named")
     private address = "actor.${getName()}"
+
+    List<MessageConsumer> consumers = []
 
     Closure action = {
         log.info "Actor.action invoked with $it"
@@ -41,21 +45,34 @@ class StandardActor extends AbstractVerticle implements Actor {
     void start(Promise<Void> promise) {
 
         log.debug "start: register listener on 'actor.$name'"
-        vertx.eventBus().<JsonObject>consumer (address, this::reply )
+        consumers << vertx.eventBus().<JsonObject>consumer (address, this::reply )
 
         promise.complete()
     }
 
     void stop (Promise<Void> promise) {
-        log.debug "stop: unregister listener on 'actor.$name'"
+        log.debug "stop: unregister any listeners on 'actor.$name'"
+
+        consumers.each {it.unregister()}
+
+        promise.complete()
 
     }
 
-    def sendAndReply (def args) {
-        vertx.eventBus().request("actor.${getName()}", args, this::reply)
+    def publish (def args, DeliveryOptions options=null) {
+        vertx.eventBus().publish("address", args, options ?: new DeliveryOptions ())
     }
 
-    private void reply (Message<JsonObject> message) {
+    def sendAndReply (def args, DeliveryOptions options = null) {
+        vertx.eventBus().request("actor.${getName()}", args, options ?: new DeliveryOptions(), this::reply)
+    }
+
+    def send (def args, DeliveryOptions options = null) {
+        vertx.eventBus().send("address", "message", options ?: new DeliveryOptions())
+    }
+
+
+    void reply (Message<JsonObject> message) {
         JsonObject body = message.body()
         Map bodyMap = body.getMap()
 
@@ -69,6 +86,5 @@ class StandardActor extends AbstractVerticle implements Actor {
             message.reply (action (*body))
             return
         }
-
     }
 }
