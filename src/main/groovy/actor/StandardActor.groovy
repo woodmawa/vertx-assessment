@@ -15,11 +15,14 @@ class StandardActor extends AbstractVerticle implements Actor {
 
     private Optional<String> name = Optional.of ("Un-Named")
     private address = "actor.${getName()}"
+    String deploymentId = ""
 
     List<MessageConsumer> consumers = []
 
     Closure action = {
         log.info "Actor.action invoked with $it"
+
+        "actionReturn : $it"
     }
 
     String getName () {
@@ -44,10 +47,11 @@ class StandardActor extends AbstractVerticle implements Actor {
 
     void start(Promise<Void> promise) {
 
-        log.debug "start: register listener on 'actor.$name'"
+        log.debug "start: register listener on [actor.${getName()}]"
+
         consumers << vertx.eventBus().<JsonObject>consumer (address, this::reply )
 
-        promise.complete()
+        promise?.complete()
     }
 
     void stop (Promise<Void> promise) {
@@ -55,7 +59,7 @@ class StandardActor extends AbstractVerticle implements Actor {
 
         consumers.each {it.unregister()}
 
-        promise.complete()
+        promise?.complete()
 
     }
 
@@ -64,27 +68,43 @@ class StandardActor extends AbstractVerticle implements Actor {
     }
 
     def sendAndReply (def args, DeliveryOptions options = null) {
-        vertx.eventBus().request("actor.${getName()}", args, options ?: new DeliveryOptions(), this::reply)
+        log.debug ("send&reply: [$args] sent to [$address]")
+
+        //wrap args in jsonObject
+        JsonObject argsMessage = new JsonObject()
+        argsMessage.put("args", args)
+        vertx.eventBus().request("actor.${getName()}", argsMessage, options ?: new DeliveryOptions(), this::reply)
+        //returns eventBus
     }
 
     def send (def args, DeliveryOptions options = null) {
         vertx.eventBus().send("address", "message", options ?: new DeliveryOptions())
     }
 
-
     void reply (Message<JsonObject> message) {
+
         JsonObject body = message.body()
         Map bodyMap = body.getMap()
 
+        log.info ("reply: got message with body $body")
+
+        def args = body.getString("args")
+
+        def result = void
+
         if (action.maximumNumberOfParameters == 0) {
-            message.reply(action())
-            return
+            result = action()
         } else if (action.maximumNumberOfParameters == 1) {
-            message.reply (action (bodyMap))
-            return
+            result = action (args)
         } else if (action.maximumNumberOfParameters > 1) {
-            message.reply (action (*body))
-            return
+            result = action (*args)
         }
+
+        JsonObject replMessage = new JsonObject ()
+        replMessage.put ("reply", result.toString())
+
+        log.info ("reply: replying with  [$replMessage] to reply@: ${message.replyAddress()}, orig message sent to ${message.address()}, isSend() : ${message.isSend()}")
+
+        message.reply (replMessage)
     }
 }
