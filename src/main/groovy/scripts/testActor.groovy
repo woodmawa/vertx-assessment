@@ -1,31 +1,43 @@
 package scripts
 import actor.*
+import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.EventBus
 
 StandardActor  a = Actors.actor {println "my actor was called with $it "; "actorResult:$it"}
 
-EventBus bus = a.sendAndReply("will ")
+Promise p  = a.sendAndReply("will ")
 
-Vertx vertx = Vertx.vertx()
-//vertx.undeploy (a.deploymentId)
+p.future().onComplete(ar -> {
+    println "sendAndReply future result is ${ar.result()} "
+})
 
-println "actor a got deploymentId : ${a.deploymentId}"
+
+
+def vertx = Actors.vertx
+
+Set<String> dids = Actors.vertx.deploymentIDs()
+List<String> ldids = dids.collect()
+def did = ldids[0]
+println "script: list of deployment ids is $ldids"
+
+println "script: actor a got deploymentId : ${a.deploymentId}"
 
 vertx.undeploy(a.deploymentId, ar -> {
     if (ar.succeeded()) {
-        println "undeployed actor $a.name"
+        println "script, undeploy handler : undeployed actor $a.name"
+
     } else{
-        println "undeployError: couldnt undeploy actor $a.name, because : [${ar.cause().message}]"
+        println "script, undeploy handler: undeployError: couldnt undeploy actor $a.name, because : [${ar.cause().message}]"
     }
 })
 
 vertx.close(ar -> {
     if (ar.succeeded()) {
-        println "vertx closed ok"
+        println "script, close handler: vertx closed ok"
     } else  {
-        println "couldnt close vertx reason ${ar.cause().message}"
+        println "script, close handler:couldnt close vertx reason ${ar.cause().message}"
     }
 })
 
-println "closed vertx and exit script"
+println "script: closed vertx and exit script"

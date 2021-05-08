@@ -25,7 +25,7 @@ final int VIRTUAL_TERMINAL_PROCESSING = 0x0004
 long console = GetStdHandle(STD_OUTPUT_HANDLE)
 int[] mode = new int[1]
 def ansiEnabled = Kernel32.GetConsoleMode(console, mode)
-println "appended is ansi enabled $ansiEnabled"
+//println "appended is ansi enabled $ansiEnabled"
 
 
 

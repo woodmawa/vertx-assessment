@@ -73,7 +73,7 @@ class StandardActor extends AbstractVerticle implements Actor {
         //wrap args in jsonObject
         JsonObject argsMessage = new JsonObject()
         argsMessage.put("args", args)
-        vertx.eventBus().request("actor.${getName()}", argsMessage, options ?: new DeliveryOptions(), this::reply)
+        vertx.eventBus().request("actor.${getName()}", argsMessage, options ?: new DeliveryOptions() ) /*, this::reply)*/
         //returns eventBus
     }
 
