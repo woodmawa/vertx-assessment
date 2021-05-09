@@ -33,7 +33,7 @@ def ansiEnabled = Kernel32.GetConsoleMode(console, mode)
 appender("AnsiConsole", ConsoleAppender) {
     encoder(PatternLayoutEncoder) {
         //logger{5} will shorten just to class name to x.y.z.ClassName form
-        pattern = "[%d{HH:mm:ss.SSS}] %cyan([%thread]) %highlight([%level]) %magenta(%logger{5}) @\\(method:%method:%line\\) : %msg%n"
+        pattern = "[%d{HH:mm:ss.SSS}] %cyan([%thread]) %highlight([%level]) %magenta(%logger{5}) : %msg%n"
     }
 }
 
