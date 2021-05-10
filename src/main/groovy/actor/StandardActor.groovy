@@ -171,7 +171,7 @@ class StandardActor extends AbstractVerticle implements Actor {
         JsonObject body = message.body()
         Map bodyMap = body.getMap()
 
-        log.info ("executeAction: got message with body $body")
+        log.info ("executeAction: got message with body $body and isSend() set to : ${message.isSend()}")
 
         def args = body.getString("args")
 
