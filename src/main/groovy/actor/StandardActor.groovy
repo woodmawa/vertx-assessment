@@ -166,25 +166,34 @@ class StandardActor extends AbstractVerticle implements Actor {
 
         def args = body.getString("args")
 
-        def result = void
-
         Future future
 
-        //todo at the mo this is blocking on the main thread
+        //cant use as i want to use the args, //vertx.executeBlocking(this::executeBlocking, this::blockingResultHandler)
+
         if (action.maximumNumberOfParameters == 0) {
-            future = vertx.executeBlocking({it.complete(action())}, this::blockingResultHandler)
+            future = vertx.executeBlocking({ it.complete(action()) }, this::blockingResultHandler)
         } else if (action.maximumNumberOfParameters == 1) {
-            future = vertx.executeBlocking({it.complete(action(args))}, this::blockingResultHandler)
+            future = vertx.executeBlocking({ it.complete(action(args)) }, this::blockingResultHandler)
         } else if (action.maximumNumberOfParameters > 1) {
-            future = vertx.executeBlocking({it.complete(action(*args))}, this::blockingResultHandler)
+            future = vertx.executeBlocking({ it.complete(action(*args)) }, this::blockingResultHandler)
         }
 
-        future
-        //JsonObject json = new JsonObject ()
-        //json.put ("executeAction result", result.toString())
+    }
 
-        //log.info ("executeAction: result of action as json is  [$json],  orig message sent to ${message.address()}, isSend() : ${message.isSend()}")
+    /**
+     * if not required to take any parameters use vertx.executeBlocking(this::executeBlocking, this::blockingResultHandler)
+     * @param promise
+     */
+    void executeBlocking (Promise promise) {
 
+        def result
+
+        //todo at the mo this is blocking on the main thread
+        try {
+            promise.complete(action())
+        } catch (Throwable ex) {
+            promise.fail (ex)
+        }
     }
 
     void blockingResultHandler (AsyncResult ar) {

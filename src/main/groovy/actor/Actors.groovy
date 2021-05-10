@@ -40,10 +40,10 @@ class Actors {
     static shutdown () {
         vertx.close(ar -> {
             if (ar.succeeded()) {
-                println ">>Actors.shutdown(): close handler: actor network closed successfully "
+                log.info ">>Actors.shutdown(): close handler: actor network closed successfully "
                 deployedActors.clear()
             } else  {
-                println ">>Actors.shutdown(): close handler:couldnt close actor network,  reason ${ar.cause().message}"
+                log.debug ">>Actors.shutdown(): close handler:couldnt close actor network,  reason ${ar.cause().message}"
             }
         })
     }
