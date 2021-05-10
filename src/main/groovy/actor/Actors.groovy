@@ -16,6 +16,36 @@ class Actors {
         vertx.deploymentIDs().collect()
     }
 
+    /**
+     * actor with name
+     * @param String name, can be null
+     * @param Closure action,  for action - default provided which just returns it
+     * @return
+     */
+    static Actor actor (String name, Closure action=null) {
+        StandardActor actor = new StandardActor (name, action)
+
+        Verticle v = actor as Verticle
+
+        //deploy this specific verticle instance
+        vertx.deployVerticle(v, {ar ->
+            if (ar.succeeded()) {
+                actor.deploymentId = ar.result()
+                deployedActors.put(ar.result(), actor)
+
+                log.info ("Actors.actor(): started verticle $this successfully and got deploymentId ${ar.result()}")
+
+                //whoopee
+            } else {
+                log.debug ("Actors.actor(): deployVerticle $this encountered a problem ${ar.cause().message}")
+            }
+        })
+
+        actor
+
+    }
+
+
     static Actor actor (Closure action=null) {
         StandardActor actor = new StandardActor (action)
         Verticle v = actor as Verticle

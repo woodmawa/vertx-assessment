@@ -19,7 +19,7 @@ import java.util.function.Function
 class StandardActor extends AbstractVerticle implements Actor {
 
     private Optional<String> name = Optional.of ("Un-Named")
-    private address = "actor.${getName()}"
+    //private address = "actor.${->getName()}".toString()
     String deploymentId = ""
 
     List<MessageConsumer> consumers = []
@@ -28,6 +28,10 @@ class StandardActor extends AbstractVerticle implements Actor {
         log.info "Actor.action invoked with $it"
 
         "actionReturn : $it"
+    }
+
+    String getAddress () {
+        "actor.${->getName()}".toString()
     }
 
     String getName () {
@@ -41,35 +45,40 @@ class StandardActor extends AbstractVerticle implements Actor {
     //constructor
     StandardActor (Closure action) {
         assert action
-        this.action = action
+        this.action = (Closure) action?.clone()
+        this.action?.delegate = this
+
     }
 
     StandardActor (Function actionFunction) {
         assert action
         //todo is this reasonable
         this.action = actionFunction as Closure
+        this.action?.delegate = this
+
     }
 
     StandardActor (String name,  Closure action) {
         assert action
-        this.action = action
         this.name = Optional.ofNullable(name)
-    }
+        this.action = action?.clone()
+        this.action?.delegate = this
+   }
 
     //verticle start and stop methids
     void start(Promise<Void> promise) {
 
-        log.debug "start: register listeners on [actor.${getName()}]"
+        log.debug "start: register listeners on [$address]"
 
         //see page 56
-        consumers << vertx.eventBus().<JsonObject>consumer (address, this::reply )
-        consumers << vertx.eventBus().<JsonObject>consumer (address, this::executeAction )
+        consumers << vertx.eventBus().<JsonObject>consumer (getAddress(), this::reply )
+        consumers << vertx.eventBus().<JsonObject>consumer (getAddress(), this::executeAction )
 
         promise?.complete()
     }
 
     void stop (Promise<Void> promise) {
-        log.debug "stop: # of consumers is currently ${consumers.size()},  unregister all the listeners on 'actor.$name'"
+        log.debug "stop: # of consumers is currently ${consumers.size()},  unregister all the listeners on $address"
 
         consumers.each {it.unregister()}
         consumers.clear()
@@ -79,17 +88,17 @@ class StandardActor extends AbstractVerticle implements Actor {
     }
 
     def publish (def args, DeliveryOptions options=null) {
-        log.debug ("publish: [$args] sent to [$address]")
+        log.debug ("publish: [$args] sent to [${address}]")
 
         //wrap args in jsonObject
         JsonObject argsMessage = new JsonObject()
         argsMessage.put("args", args)
 
-        vertx.eventBus().publish("address", args, options ?: new DeliveryOptions ())
+        vertx.eventBus().publish(address, argsMessage, options ?: new DeliveryOptions ())
     }
 
     def sendAndReply (def args, DeliveryOptions options = null) {
-        log.debug ("send&reply: [$args] sent to [$address]")
+        log.debug ("send&reply: [$args] sent to [${address}]")
 
         BlockingQueue results = new LinkedBlockingQueue()
 
@@ -99,7 +108,7 @@ class StandardActor extends AbstractVerticle implements Actor {
         //vertx.eventBus().request("actor.${getName()}", argsMessage, options ?: new DeliveryOptions() , this::reply)
         //see page 59
         //do a request & reply cycle
-        vertx.eventBus().request("actor.${getName()}", argsMessage, options ?: new DeliveryOptions(), {reply ->
+        vertx.eventBus().request(address, argsMessage, options ?: new DeliveryOptions(), {reply ->
             if (reply.succeeded()) {
                 results.put (reply.result().body())
             } else {
@@ -112,7 +121,7 @@ class StandardActor extends AbstractVerticle implements Actor {
     }
 
     EventBus send (def args, DeliveryOptions options = null) {
-        log.debug ("send: [$args] sent to [$address]")
+        log.debug ("send: [$args] sent to [${address}]")
 
         //wrap args in jsonObject
         JsonObject argsMessage = new JsonObject()
