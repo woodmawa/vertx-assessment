@@ -13,6 +13,7 @@ import io.vertx.core.json.JsonObject
 
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.function.Consumer
 import java.util.function.Function
 
 @Slf4j
@@ -71,7 +72,7 @@ class StandardActor extends AbstractVerticle implements Actor {
         log.debug "start: register listeners on [$address]"
 
         //see page 56
-        consumers << vertx.eventBus().<JsonObject>consumer (getAddress(), this::reply )
+        //consumers << vertx.eventBus().<JsonObject>consumer (getAddress(), this::reply )
         consumers << vertx.eventBus().<JsonObject>consumer (getAddress(), this::executeAction )
 
         promise?.complete()
@@ -87,14 +88,30 @@ class StandardActor extends AbstractVerticle implements Actor {
 
     }
 
+    void addConsumer (Address from, Closure consumer) {
+        consumers << vertx.eventBus().consumer (from.address, consumer)
+    }
+
+    void addConsumer (Consumer consumer) {
+        consumers << vertx.eventBus().consumer()
+    }
+
+    boolean removeConsumer (consumer) {
+        consumers.remove(consumer as MessageConsumer)
+    }
+
     def publish (def args, DeliveryOptions options=null) {
-        log.debug ("publish: [$args] sent to [${address}]")
+        publish (new Address (this.getAddress()), args, options)
+    }
+
+    def publish (Address postTo, def args, DeliveryOptions options=null) {
+        log.debug ("publish: [$args] sent to [${postTo.address}]")
 
         //wrap args in jsonObject
         JsonObject argsMessage = new JsonObject()
         argsMessage.put("args", args)
 
-        vertx.eventBus().publish(address, argsMessage, options ?: new DeliveryOptions ())
+        vertx.eventBus().publish(postTo.address, argsMessage, options ?: new DeliveryOptions ())
     }
 
     def sendAndReply (def args, DeliveryOptions options = null) {
@@ -105,23 +122,31 @@ class StandardActor extends AbstractVerticle implements Actor {
         //wrap args in jsonObject
         JsonObject argsMessage = new JsonObject()
         argsMessage.put("args", args)
-        //vertx.eventBus().request("actor.${getName()}", argsMessage, options ?: new DeliveryOptions() , this::reply)
-        //see page 59
-        //do a request & reply cycle
-        vertx.eventBus().request(address, argsMessage, options ?: new DeliveryOptions(), {reply ->
-            if (reply.succeeded()) {
-                results.put (reply.result().body())
-            } else {
-                results.put (reply.cause().message)
-            }
+        // see also https://github.com/vert-x3/wiki/wiki/RFC:-Future-API
+
+        //use new promise/future model - resuest is expecting a message.reply()
+        Future response = vertx.eventBus().request(address, argsMessage, options ?: new DeliveryOptions())
+
+        //get response and add to blocking Queue
+        response.onComplete(ar -> {
+            println "in requests, response handler with [${ar.result().body()}"
+            results.put (ar.result().body())
         })
 
-        //blocking wait for result
+        //blocking wait for result to become available then return it
         def result = results.take()
     }
 
+    // can be chained
     EventBus send (def args, DeliveryOptions options = null) {
-        log.debug ("send: [$args] sent to [${address}]")
+
+        send (new Address(this.getAddress()), args, options)
+
+    }
+
+    EventBus send (Address postTo, def args, DeliveryOptions options = null) {
+        assert postTo
+        log.debug ("send: [$args] sent to [${postTo.address}]")
 
         //wrap args in jsonObject
         JsonObject argsMessage = new JsonObject()
@@ -131,42 +156,11 @@ class StandardActor extends AbstractVerticle implements Actor {
     }
 
     /**
-     * expecting to reply on specific auto generated back address to the sender with reply() method
-     * @param message
-     */
-    void reply (Message<JsonObject> message) {
-
-        JsonObject body = message.body()
-        Map bodyMap = body.getMap()
-
-        log.info ("reply: got message with body $body")
-
-        def args = body.getString("args")
-
-        def result = void
-
-        if (action.maximumNumberOfParameters == 0) {
-            result = action()
-        } else if (action.maximumNumberOfParameters == 1) {
-            result = action (args)
-        } else if (action.maximumNumberOfParameters > 1) {
-            result = action (*args)
-        }
-
-        JsonObject json = new JsonObject ()
-        json.put ("reply", result.toString())
-
-        log.info ("reply: replying with  [$json] to reply@: ${message.replyAddress()}, orig message sent to ${message.address()}, isSend() : ${message.isSend()}")
-
-        message.reply (json)
-    }
-
-    /**
      * invoked action from a send but no reply
      *
      * @param message
      */
-    void executeAction (Message<JsonObject> message) {
+    void executeAction(Message<JsonObject> message) {
 
         JsonObject body = message.body()
         Map bodyMap = body.getMap()
@@ -175,46 +169,50 @@ class StandardActor extends AbstractVerticle implements Actor {
 
         def args = body.getString("args")
 
-        Future future
-
-        //cant use as i want to use the args, //vertx.executeBlocking(this::executeBlocking, this::blockingResultHandler)
-
-        if (action.maximumNumberOfParameters == 0) {
-            future = vertx.executeBlocking({ it.complete(action()) }, this::blockingResultHandler)
-        } else if (action.maximumNumberOfParameters == 1) {
-            future = vertx.executeBlocking({ it.complete(action(args)) }, this::blockingResultHandler)
-        } else if (action.maximumNumberOfParameters > 1) {
-            future = vertx.executeBlocking({ it.complete(action(*args)) }, this::blockingResultHandler)
+        //closure that executes the action closure and stores the result in the Promise
+        //using a closure as need to reference the args in context, as executeBlocking only passes a Promise as arg
+        Closure doBlocking = {Promise<Object> promise ->
+            try {
+                def result
+                if (action.maximumNumberOfParameters == 0) {
+                    result = action()
+                } else if (action.maximumNumberOfParameters == 1) {
+                    result = action(args)
+                } else if (action.maximumNumberOfParameters > 1) {
+                    result = action(*args)
+                }
+                //println "in doBlocking closure,  returning promise with $result"
+                promise.complete (result)
+            } catch (Throwable ex) {
+                promise.fail(ex)
+            }
         }
 
+        vertx.executeBlocking(doBlocking)
+        .onComplete(ar -> {
+
+            JsonObject json = new JsonObject()
+            if (ar.succeeded()) {
+                if (message.replyAddress() && message.isSend()) {
+                    def result = ar.result()
+                    json.put("reply", result.toString())
+
+                    message.reply(json)
+                    log.info("executeAction(): replying with  [$json] to reply@: ${message.replyAddress()}, orig message sent to ${message.address()}, isSend() : ${message.isSend()}")
+
+                } else  {
+                    def result = ar.result()
+                    json.put("no return, with", result.toString())
+
+                    log.info("executeAction(): got  [$json] from action()  and reply@: ${message.replyAddress()}, orig message sent to ${message.address()}, isSend() : ${message.isSend()}")
+
+                }
+            } else {
+                json.put("Exception", ar.cause().message)
+                message.reply(json)
+            }
+        })
     }
 
-    /**
-     * if not required to take any parameters use vertx.executeBlocking(this::executeBlocking, this::blockingResultHandler)
-     * @param promise
-     */
-    void executeBlocking (Promise promise) {
 
-        def result
-
-        //todo at the mo this is blocking on the main thread
-        try {
-            promise.complete(action())
-        } catch (Throwable ex) {
-            promise.fail (ex)
-        }
-    }
-
-    void blockingResultHandler (AsyncResult ar) {
-        if (ar.succeeded()){
-            JsonObject json = new JsonObject ()
-            json.put ("blockingResultHandler result", ar.result().toString())
-
-            log.info ("blockingResultHandler: result of blocking action as json is  [$json]")
-
-        } else {
-            log.debug ("blockingResultHandler: result of blocking action failed with   [${ar.cause().message}]")
-
-        }
-    }
 }

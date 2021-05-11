@@ -16,11 +16,12 @@ println ">>script: sendAndReply blocking  result is ${result} "
 
 //asynchronous send - no result will come back
 a.send("woodman ")
-println ">>script: send  async  "
+println ">>script: send, async and no return  "
 
-//sleep(5)
-//a.publish(" & Marian ")
-//println ">>script: sendAndReply blocking  result is ${result} "
+
+//pub sub - model all consumers on the address will get the request
+a.publish(" & Marian ")
+println ">>script: publish, async and no return  "
 
 def vertx = Actors.vertx
 
