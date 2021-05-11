@@ -171,7 +171,7 @@ class StandardActor extends AbstractVerticle implements Actor {
 
         //closure that executes the action closure and stores the result in the Promise
         //using a closure as need to reference the args in context, as executeBlocking only passes a Promise as arg
-        Closure doBlocking = {Promise<Object> promise ->
+        Closure doBlockingAction = {Promise<Object> promise ->
             try {
                 def result
                 if (action.maximumNumberOfParameters == 0) {
@@ -188,7 +188,7 @@ class StandardActor extends AbstractVerticle implements Actor {
             }
         }
 
-        vertx.executeBlocking(doBlocking)
+        vertx.executeBlocking(doBlockingAction)
         .onComplete(ar -> {
 
             JsonObject json = new JsonObject()
