@@ -116,11 +116,20 @@ class StandardActor extends AbstractVerticle implements Actor {
         consumers.removeAll(matched)
      }
 
-    def publish (def args, DeliveryOptions options=null) {
+    //post and publish actions can be chained on the returned event bus
+    EventBus post (def args, DeliveryOptions options=null) {
         publish (new Address (this.getAddress()), args, options)
     }
 
-    def publish (Address postTo, def args, DeliveryOptions options=null) {
+    EventBus post (Address postTo, def args, DeliveryOptions options=null) {
+        publish (postTo, args, options)
+    }
+
+    EventBus publish (def args, DeliveryOptions options=null) {
+        publish (new Address (this.getAddress()), args, options)
+    }
+
+    EventBus publish (Address postTo, def args, DeliveryOptions options=null) {
         log.debug ("publish: [$args] sent to [${postTo.address}]")
 
         //wrap args in jsonObject
