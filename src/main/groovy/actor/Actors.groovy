@@ -33,7 +33,7 @@ class Actors {
                 actor.deploymentId = ar.result()
                 deployedActors.put(ar.result(), actor)
 
-                log.info ("Actors.actor(): started verticle $this successfully and got deploymentId ${ar.result()}")
+                log.debug ("Actors.actor(): started verticle $this successfully and got deploymentId ${ar.result()}")
 
                 //whoopee
             } else {
@@ -56,7 +56,7 @@ class Actors {
                 actor.deploymentId = ar.result()
                 deployedActors.put(ar.result(), actor)
 
-                log.info ("Actors.actor(): started verticle $this successfully and got deploymentId ${ar.result()}")
+                log.debug ("Actors.actor(): started verticle $this successfully and got deploymentId ${ar.result()}")
 
                 //whoopee
             } else {
@@ -70,7 +70,7 @@ class Actors {
     static shutdown () {
         vertx.close(ar -> {
             if (ar.succeeded()) {
-                log.info ">>Actors.shutdown(): close handler: actor network closed successfully "
+                log.debug ">>Actors.shutdown(): close handler: actor network closed successfully "
                 deployedActors.clear()
             } else  {
                 log.debug ">>Actors.shutdown(): close handler:couldnt close actor network,  reason ${ar.cause().message}"
