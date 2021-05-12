@@ -106,6 +106,16 @@ class StandardActor extends AbstractVerticle implements Actor {
         consumers.remove(consumer as MessageConsumer)
     }
 
+    boolean removeAllConsumersFromAddress (Address postTo) {
+        removeAllConsumersFromAddress (postTo.address)
+    }
+
+    boolean removeAllConsumersFromAddress (String address) {
+        def matched = consumers.findAll {it.address() == address}
+        matched.each {it.unregister()}
+        consumers.removeAll(matched)
+     }
+
     def publish (def args, DeliveryOptions options=null) {
         publish (new Address (this.getAddress()), args, options)
     }
@@ -204,8 +214,9 @@ class StandardActor extends AbstractVerticle implements Actor {
         JsonObject argsMessage = new JsonObject()
         argsMessage.put("args", args)
 
-        vertx.eventBus().send(address, argsMessage, options ?: new DeliveryOptions())
+        vertx.eventBus().send(postTo.address, argsMessage, options ?: new DeliveryOptions())
     }
+
 
     /**
      * invoked action from a send but no reply
@@ -220,6 +231,19 @@ class StandardActor extends AbstractVerticle implements Actor {
         log.debug ("executeAction: got message with body $body and isSend() set to : ${message.isSend()}")
 
         def args = body.getString("args")
+
+        //dynamic dispatch logic can go here- think that happens dynamically any way
+        /*switch (args.class) {
+            case Number  :
+                println "args was Number"
+                break
+            case String :
+                println "arg was String"
+                break
+            default:
+                println "arg was $args.class"
+                break
+        }*/
 
         //closure that executes the action closure and stores the result in the Promise
         //using a closure as need to reference the args in context, as executeBlocking only passes a Promise as arg

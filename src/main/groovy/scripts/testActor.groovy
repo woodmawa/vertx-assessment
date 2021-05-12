@@ -9,8 +9,7 @@ def result  = a.requestAndReply("will")
 
 println ">>script: sendAndReply blocking  result is ${result} "
 
-//needs a small amount of time <50ms before just calling send async will work
-//sleep(50)
+a.send (10)
 
 //asynchronous send - no result will come back
 a << ["woodman", "tribe"].stream()
