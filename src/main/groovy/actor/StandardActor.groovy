@@ -28,11 +28,12 @@ class StandardActor extends AbstractVerticle implements Actor {
     List<MessageConsumer> consumers = []
 
     Closure action = {
-        log.info "Actor.action invoked with $it"
+        log.info "default Actor.action invoked with $it"
 
-        "actionReturn : $it"
+        "$it"
     }
 
+    //each actor has a default message bus address which is "actor.<name>"
     String getAddress () {
         "actor.${->getName()}".toString()
     }
@@ -68,13 +69,13 @@ class StandardActor extends AbstractVerticle implements Actor {
         this.action?.delegate = this
    }
 
-    //verticle start and stop methids
+    //verticle start and stop methods
     void start(Promise<Void> promise) {
 
         log.debug "start: register listeners on [$address]"
 
         //see page 56
-        //consumers << vertx.eventBus().<JsonObject>consumer (getAddress(), this::reply )
+        //register the default listener for the default address
         consumers << vertx.eventBus().<JsonObject>consumer (getAddress(), this::executeAction )
 
         promise?.complete()
