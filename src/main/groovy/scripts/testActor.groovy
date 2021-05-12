@@ -1,13 +1,10 @@
 package scripts
 import actor.*
-import io.vertx.core.Promise
-import io.vertx.core.Vertx
-import io.vertx.core.eventbus.EventBus
 
-StandardActor  a = Actors.actor ("fred") {println "\t--my actor [called: ${getName()}] action(): action was called with [$it] "; "actorResult:$it"}
+StandardActor a = Actors.actor ("fred") {println "\t--my actor [called: ${getName()}] action(): action was called with [$it] "; "actorResult:$it"}
 
 //blocking send&reply - no result will come back
-def result  = a.sendAndReply("will")
+def result  = a.requestAndReply("will")
 
 println ">>script: sendAndReply blocking  result is ${result} "
 
@@ -15,7 +12,7 @@ println ">>script: sendAndReply blocking  result is ${result} "
 //sleep(50)
 
 //asynchronous send - no result will come back
-a.send("woodman ")
+a << ["woodman", "tribe"].stream()
 println ">>script: send, async and no return  "
 
 

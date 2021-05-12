@@ -15,6 +15,7 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.function.Consumer
 import java.util.function.Function
+import java.util.stream.Stream
 
 @Slf4j
 class StandardActor extends AbstractVerticle implements Actor {
@@ -88,12 +89,16 @@ class StandardActor extends AbstractVerticle implements Actor {
 
     }
 
-    void addConsumer (Address from, Closure consumer) {
-        consumers << vertx.eventBus().consumer (from.address, consumer)
+    MessageConsumer addConsumer (Address from, Consumer consumer) {
+        MessageConsumer mc = vertx.eventBus().consumer (from.address, consumer)
+        consumers << mc
+        mc
     }
 
-    void addConsumer (Consumer consumer) {
-        consumers << vertx.eventBus().consumer()
+    MessageConsumer addConsumer (Consumer consumer) {
+        MessageConsumer mc = vertx.eventBus().consumer (new Address (this::getAddress()), consumer)
+        consumers << mc
+        mc
     }
 
     boolean removeConsumer (consumer) {
@@ -114,8 +119,8 @@ class StandardActor extends AbstractVerticle implements Actor {
         vertx.eventBus().publish(postTo.address, argsMessage, options ?: new DeliveryOptions ())
     }
 
-    def sendAndReply (def args, DeliveryOptions options = null) {
-        log.debug ("send&reply: [$args] sent to [${address}]")
+    def requestAndReply(def args, DeliveryOptions options = null) {
+        log.debug ("request&reply: [$args] sent to [${address}]")
 
         BlockingQueue results = new LinkedBlockingQueue()
 
@@ -137,11 +142,44 @@ class StandardActor extends AbstractVerticle implements Actor {
         def result = results.take()
     }
 
+    /**
+     * returns a future which can be chained with onSuccess() and onError() actions
+     * @param args
+     * @param options
+     * @return  vertx Future
+     */
+    Future requestAndAsyncReply (def args, DeliveryOptions options = null) {
+        log.debug ("request&reply: [$args] sent to [${address}]")
+
+        BlockingQueue results = new LinkedBlockingQueue()
+
+        //wrap args in jsonObject
+        JsonObject argsMessage = new JsonObject()
+        argsMessage.put("args", args)
+        // see also https://github.com/vert-x3/wiki/wiki/RFC:-Future-API
+
+        //use new promise/future model - resuest is expecting a message.reply()
+        Future response = vertx.eventBus().request(address, argsMessage, options ?: new DeliveryOptions())
+    }
+
+    /**
+     * post a message using groovy << operator
+     * @param args
+     * @param options
+     * @return
+     */
+    EventBus leftShift (def args, DeliveryOptions options = null) {
+        send (args, options)
+    }
+
+    EventBus leftShift (Stream streamOfArgs, DeliveryOptions options = null) {
+
+        streamOfArgs.forEach(this::send)
+    }
+
     // can be chained
     EventBus send (def args, DeliveryOptions options = null) {
-
         send (new Address(this.getAddress()), args, options)
-
     }
 
     EventBus send (Address postTo, def args, DeliveryOptions options = null) {
@@ -190,21 +228,20 @@ class StandardActor extends AbstractVerticle implements Actor {
 
         vertx.executeBlocking(doBlockingAction)
         .onComplete(ar -> {
-
             JsonObject json = new JsonObject()
             if (ar.succeeded()) {
                 if (message.replyAddress() && message.isSend()) {
                     def result = ar.result()
                     json.put("reply", result.toString())
 
-                    message.reply(json)
-                    log.info("executeAction(): replying with  [$json] to reply@: ${message.replyAddress()}, orig message sent to ${message.address()}, isSend() : ${message.isSend()}")
+                    message.reply (json)
+                    log.debug("executeAction(): replying with  [$json] to reply@: ${message.replyAddress()}, orig message sent to ${message.address()}, isSend() : ${message.isSend()}")
 
                 } else  {
                     def result = ar.result()
                     json.put("no return, with", result.toString())
 
-                    log.info("executeAction(): got  [$json] from action()  and reply@: ${message.replyAddress()}, orig message sent to ${message.address()}, isSend() : ${message.isSend()}")
+                    log.debug("executeAction(): got  [$json] from action()  and reply@: ${message.replyAddress()}, orig message sent to ${message.address()}, isSend() : ${message.isSend()}")
 
                 }
             } else {
