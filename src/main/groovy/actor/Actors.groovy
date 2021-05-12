@@ -23,7 +23,11 @@ class Actors {
      * @return
      */
     static Actor actor (String name, Closure action=null) {
-        StandardActor actor = new StandardActor (name, action)
+        StandardActor actor
+        if (action)
+            actor = new StandardActor (name, action)
+        else
+            actor = new StandardActor (name)
 
         Verticle v = actor as Verticle
 

@@ -11,6 +11,7 @@ import io.vertx.core.eventbus.EventBus
 import io.vertx.core.eventbus.Message
 import io.vertx.core.eventbus.MessageConsumer
 import io.vertx.core.json.JsonObject
+import org.codehaus.groovy.runtime.MethodClosure
 
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
@@ -27,11 +28,50 @@ class StandardActor extends AbstractVerticle implements Actor {
 
     List<MessageConsumer> consumers = []
 
-    Closure action = {
-        log.info "default Actor.action invoked with $it"
+    def defaultAction (def args) {
+        log.info "default untyped args Actor.action invoked with $args"
 
-        "$it"
+        args
     }
+
+    def defaultAction (Integer arg) {
+        log.info "default Integer Actor.action invoked with $arg"
+
+        arg
+    }
+
+    def defaultAction (BigInteger arg) {
+        log.info "default BigInteger Actor.action invoked with $arg"
+
+        arg
+    }
+
+    def defaultAction (Float arg) {
+        log.info "default Float Actor.action invoked with $arg"
+
+        arg
+    }
+
+    def defaultAction (Double arg) {
+        log.info "default Double Actor.action invoked with $arg"
+
+        arg
+    }
+
+    def defaultAction (BigDecimal arg) {
+        log.info "default BigDecimal Actor.action invoked with $arg"
+
+        arg
+    }
+
+    def defaultAction (String arg) {
+        log.info "default String Actor.action invoked with $arg"
+
+        arg
+    }
+
+    //dynamic dispatch logic handled by groovy
+    MethodClosure action = this::defaultAction
 
     //each actor has a default message bus address which is "actor.<name>"
     String getAddress () {
@@ -47,6 +87,11 @@ class StandardActor extends AbstractVerticle implements Actor {
     }
 
     //constructor
+
+    StandardActor (String name ) {
+        this.name = Optional.ofNullable(name)
+    }
+
     StandardActor (Closure action) {
         assert action
         this.action = (Closure) action?.clone()
@@ -65,7 +110,7 @@ class StandardActor extends AbstractVerticle implements Actor {
     StandardActor (String name,  Closure action) {
         assert action
         this.name = Optional.ofNullable(name)
-        this.action = action?.clone()
+        this.action = new MethodClosure (action, "call")
         this.action?.delegate = this
    }
 
@@ -240,20 +285,7 @@ class StandardActor extends AbstractVerticle implements Actor {
 
         log.debug ("executeAction: got message with body $body and isSend() set to : ${message.isSend()}")
 
-        def args = body.getString("args")
-
-        //dynamic dispatch logic can go here- think that happens dynamically any way
-        /*switch (args.class) {
-            case Number  :
-                println "args was Number"
-                break
-            case String :
-                println "arg was String"
-                break
-            default:
-                println "arg was $args.class"
-                break
-        }*/
+        def args = bodyMap.args
 
         //closure that executes the action closure and stores the result in the Promise
         //using a closure as need to reference the args in context, as executeBlocking only passes a Promise as arg
