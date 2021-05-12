@@ -4,6 +4,7 @@ import groovy.util.logging.Slf4j
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
+import io.vertx.core.Handler
 import io.vertx.core.Promise
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.EventBus
@@ -80,7 +81,7 @@ class StandardActor extends AbstractVerticle implements Actor {
     }
 
     void stop (Promise<Void> promise) {
-        log.debug "stop: # of consumers is currently ${consumers.size()},  unregister all the listeners on $address"
+        log.debug "stop: # of consumers is currently ${consumers.size()},  unregister all the listeners "
 
         consumers.each {it.unregister()}
         consumers.clear()
@@ -89,13 +90,13 @@ class StandardActor extends AbstractVerticle implements Actor {
 
     }
 
-    MessageConsumer addConsumer (Address from, Consumer consumer) {
-        MessageConsumer mc = vertx.eventBus().consumer (from.address, consumer)
+    MessageConsumer addConsumer (Address from, consumer) {
+       MessageConsumer mc = vertx.eventBus().consumer (from.address, consumer) //consumer as Closure)
         consumers << mc
         mc
     }
 
-    MessageConsumer addConsumer (Consumer consumer) {
+    MessageConsumer addConsumer ( consumer) {
         MessageConsumer mc = vertx.eventBus().consumer (new Address (this::getAddress()), consumer)
         consumers << mc
         mc
@@ -216,7 +217,7 @@ class StandardActor extends AbstractVerticle implements Actor {
         JsonObject body = message.body()
         Map bodyMap = body.getMap()
 
-        log.info ("executeAction: got message with body $body and isSend() set to : ${message.isSend()}")
+        log.debug ("executeAction: got message with body $body and isSend() set to : ${message.isSend()}")
 
         def args = body.getString("args")
 
@@ -264,5 +265,14 @@ class StandardActor extends AbstractVerticle implements Actor {
         })
     }
 
+    void reply (args) {
+        assert args
+        JsonObject json = new JsonObject()
+
+        if (args.size > 1) {
+
+        }
+
+    }
 
 }

@@ -1,5 +1,6 @@
 package scripts
 import actor.*
+import io.vertx.core.eventbus.MessageConsumer
 
 StandardActor a = Actors.actor ("fred") {println "\t--my actor [called: ${getName()}] action(): action was called with [$it] "; "actorResult:$it"}
 
@@ -15,6 +16,14 @@ println ">>script: sendAndReply blocking  result is ${result} "
 a << ["woodman", "tribe"].stream()
 println ">>script: send, async and no return  "
 
+def reports = new Address ("reports.data")
+
+MessageConsumer consumer = a.addConsumer(reports) {
+    println "reports called for with arg: ${it.body()}"
+}
+println ">>script new consumer registered [${consumer.address()}]"
+
+a.publish (reports, "want my report right now please ")
 
 //pub sub - model all consumers on the address will get the request
 a.publish(" & Marian ")
