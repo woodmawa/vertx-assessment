@@ -177,6 +177,19 @@ class StandardActor extends AbstractVerticle implements Actor {
         streamOfArgs.forEach(this::send)
     }
 
+    /**
+     * effectivel calls async request, and when reply comes back invokes the appropriate handler
+     * @param args
+     * @param onComplete
+     * @param onFail
+     * @return
+     */
+    Future<Void> rightShift (def args, Closure onComplete, Closure onFail) {
+        Future future = requestAndAsyncReply(args)
+        .onSuccess(onComplete)  //expects the completed value
+        .onFailure(onFail)  //expects a throwable
+    }
+
     // can be chained
     EventBus send (def args, DeliveryOptions options = null) {
         send (new Address(this.getAddress()), args, options)
