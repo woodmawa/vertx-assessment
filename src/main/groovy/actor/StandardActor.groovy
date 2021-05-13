@@ -3,6 +3,7 @@ package actor
 import groovy.util.logging.Slf4j
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.AsyncResult
+import io.vertx.core.Context
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.Promise
@@ -161,6 +162,16 @@ class StandardActor extends AbstractVerticle implements Actor {
         matched.each {it.unregister()}
         consumers.removeAll(matched)
      }
+
+
+    //runOnVertx context
+    void run (code) {
+        Context ctx = vertx.getOrCreateContext()
+        Future future = ctx.executeBlocking(code)
+        future.onSuccess((arg) -> "println completed run with [$arg]; arg")
+                .onFailure((ex) -> "println run failed with $ex.message")
+    }
+
 
     //post and publish actions can be chained on the returned event bus
     EventBus post (def args, DeliveryOptions options=null) {

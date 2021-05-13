@@ -1,5 +1,6 @@
 package scripts
 import actor.*
+import io.vertx.core.Promise
 import io.vertx.core.eventbus.MessageConsumer
 
 StandardActor a = Actors.actor ("fred") {println "\t--my actor [called: ${getName()}] action(): action was called with [$it] "; "actorResult:$it"}
@@ -8,6 +9,12 @@ StandardActor a = Actors.actor ("fred") {println "\t--my actor [called: ${getNam
 def result  = a.requestAndReply("will")
 
 println ">>script: sendAndReply blocking  result is ${result} "
+
+a.run { Promise promise ->
+    sleep(50)
+    println "\t\t++++ run passed closure on vertx context"
+    promise.complete ("run passed ok")
+}
 
 a.send (10)
 
