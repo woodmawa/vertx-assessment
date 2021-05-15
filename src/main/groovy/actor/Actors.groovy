@@ -72,6 +72,7 @@ class Actors {
     }
 
     static shutdown () {
+        log.debug ">>Actors.shutdown(): ${deployedActors.size()} to be shutdown "
         vertx.close(ar -> {
             if (ar.succeeded()) {
                 log.debug ">>Actors.shutdown(): close handler: actor network closed successfully "

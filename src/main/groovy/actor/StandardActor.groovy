@@ -151,16 +151,37 @@ class StandardActor extends AbstractVerticle implements Actor {
         //get reference to static Actors.vertx and use that
         Vertx vertx = Actors.vertx
 
+        // deploy action then invokes start(Promise) method asynchronously which registers the default listener
         Future future = vertx.deployVerticle(this )
         future.onComplete({ar ->
             if (ar.succeeded()) {
                 this.deploymentId = ar.result()
                 Actors.deployedActors.put(ar.result(), this)
 
-                log.debug ("${this.getClass().name} actor: started actor  $this successfully and got deploymentId ${ar.result()}")
+                log.debug ("${this.getClass().name} actor: started actor  $this successfully and got deploymentId ${ar.result()}, #listners = ${consumers.size()}")
             } else {
                 log.debug ("${this.getClass().name} actor : failed to start actor  $this, encountered a problem ${ar.cause().message}")
 
+            }
+        })
+    }
+
+    //undeploy this specific actor from the network
+    void stop () {
+        log.debug "stop: # of consumers is currently ${consumers.size()},  unregister all the listeners "
+
+        consumers.each {it.unregister()}
+        consumers.clear()
+
+        Vertx vertx = Actors.vertx
+        Future future = vertx.undeploy(this.deploymentId)
+        future.onComplete({ar ->
+            if (ar.succeeded()) {
+                def undeployed = Actors.deployedActors.remove(deploymentId)
+                assert undeployed == this
+                log.debug ("${this.getClass().name} actor: stop actor  ${getName()}[dep:$deploymentId] successfully undeployed ")
+            } else {
+                log.debug ("${this.getClass().name} actor: stop actor  failed to undeploy, reason ${ar.cause().message} ")
             }
         })
     }
@@ -222,8 +243,7 @@ class StandardActor extends AbstractVerticle implements Actor {
      * this will run the block asynchronously on a worker thread
      * @param code
      */
-    //todo replace the StandardActor with Actor interface once we define the public contract ...
-    StandardActor run (code) {
+    Actor run (code) {
         Context ctx = vertx.getOrCreateContext()
         Future future = ctx.executeBlocking(code)
 
@@ -240,22 +260,22 @@ class StandardActor extends AbstractVerticle implements Actor {
 
 
     //post and publish actions can be chained on the returned event bus
-    StandardActor post (def args, DeliveryOptions options=null) {
+    Actor post (def args, DeliveryOptions options=null) {
         publish (new Address (this.getAddress()), args, options)
         this
     }
 
-    StandardActor post (Address postTo, def args, DeliveryOptions options=null) {
+    Actor post (Address postTo, def args, DeliveryOptions options=null) {
         publish (postTo, args, options)
         this
     }
 
-    StandardActor publish (def args, DeliveryOptions options=null) {
+    Actor publish (def args, DeliveryOptions options=null) {
         publish (new Address (this.getAddress()), args, options)
         this
     }
 
-    StandardActor publish (Address postTo, def args, DeliveryOptions options=null) {
+    Actor publish (Address postTo, def args, DeliveryOptions options=null) {
         log.debug ("publish: [$args] sent to [${postTo.address}]")
 
         //wrap args in jsonObject
@@ -315,12 +335,12 @@ class StandardActor extends AbstractVerticle implements Actor {
      * @param options
      * @return
      */
-    StandardActor leftShift (def args, DeliveryOptions options = null) {
+    Actor leftShift (def args, DeliveryOptions options = null) {
         send (args, options)
         this
     }
 
-    StandardActor leftShift (Stream streamOfArgs, DeliveryOptions options = null) {
+    Actor leftShift (Stream streamOfArgs, DeliveryOptions options = null) {
 
         streamOfArgs.forEach(this::send)
         this
@@ -340,12 +360,12 @@ class StandardActor extends AbstractVerticle implements Actor {
     }
 
     // can be chained
-    StandardActor send (def args, DeliveryOptions options = null) {
+    Actor send (def args, DeliveryOptions options = null) {
         send (new Address(this.getAddress()), args, options)
         this
     }
 
-    StandardActor send (Address postTo, def args, DeliveryOptions options = null) {
+    Actor send (Address postTo, def args, DeliveryOptions options = null) {
         assert postTo
         log.debug ("send: [$args] sent to [${postTo.address}]")
 
