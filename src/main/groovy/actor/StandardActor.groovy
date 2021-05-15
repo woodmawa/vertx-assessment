@@ -7,6 +7,7 @@ import io.vertx.core.Context
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.Promise
+import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.eventbus.Message
@@ -30,50 +31,50 @@ class StandardActor extends AbstractVerticle implements Actor {
 
     List<MessageConsumer> consumers = []
 
-    def defaultAction (def args) {
+    def onMessage (def args) {
         log.info "default untyped args Actor.action invoked with $args"
 
         args
     }
 
-    def defaultAction (Integer arg) {
+    def onMessage (Integer arg) {
         log.info "default Integer Actor.action invoked with $arg"
 
         arg
     }
 
-    def defaultAction (BigInteger arg) {
+    def onMessage (BigInteger arg) {
         log.info "default BigInteger Actor.action invoked with $arg"
 
         arg
     }
 
-    def defaultAction (Float arg) {
+    def onMessage (Float arg) {
         log.info "default Float Actor.action invoked with $arg"
 
         arg
     }
 
-    def defaultAction (Double arg) {
+    def onMessage (Double arg) {
         log.info "default Double Actor.action invoked with $arg"
 
         arg
     }
 
-    def defaultAction (BigDecimal arg) {
+    def onMessage (BigDecimal arg) {
         log.info "default BigDecimal Actor.action invoked with $arg"
 
         arg
     }
 
-    def defaultAction (String arg) {
+    def onMessage (String arg) {
         log.info "default String Actor.action invoked with $arg"
 
         arg
     }
 
     //dynamic dispatch logic handled by groovy
-    MethodClosure action = this::defaultAction
+    MethodClosure action = this::onMessage
 
     //each actor has a default message bus address which is "actor.<name>"
     String getAddress () {
@@ -89,6 +90,8 @@ class StandardActor extends AbstractVerticle implements Actor {
     }
 
     //constructors
+
+    StandardActor () {}
 
     StandardActor (String name ) {
         this.name = Optional.ofNullable(name)
@@ -141,6 +144,26 @@ class StandardActor extends AbstractVerticle implements Actor {
         this.action = mc
     }
 
+    //synchronously deploy and start this actor
+    void start() {
+        log.debug ("${this.getClass().name}.start() : manually starting  actor  ${this.getName()} ")
+
+        //get reference to static Actors.vertx and use that
+        Vertx vertx = Actors.vertx
+
+        Future future = vertx.deployVerticle(this )
+        future.onComplete({ar ->
+            if (ar.succeeded()) {
+                this.deploymentId = ar.result()
+                Actors.deployedActors.put(ar.result(), this)
+
+                log.debug ("${this.getClass().name} actor: started actor  $this successfully and got deploymentId ${ar.result()}")
+            } else {
+                log.debug ("${this.getClass().name} actor : failed to start actor  $this, encountered a problem ${ar.cause().message}")
+
+            }
+        })
+    }
 
     //verticle start and stop methods
     void start(Promise<Void> promise) {
@@ -191,14 +214,27 @@ class StandardActor extends AbstractVerticle implements Actor {
      }
 
 
-    //runOnVertx context
+    /**
+     * run method expects a handler code block which should have 1 argument which is a Promise
+     *
+     * this will run
+     * @param code
+     */
     void run (code) {
         Context ctx = vertx.getOrCreateContext()
         Future future = ctx.executeBlocking(code)
 
-        future.onSuccess((arg) -> "println completed run with [$arg]; arg")
-                //.onFailure((ex) -> "println run failed with $ex.message")
-        assert future.isComplete()
+        //future.onSuccess((arg) -> "println completed run with [$arg]; arg")
+        //.onFailure((ex) -> "println run failed with $ex.message")
+
+        future.onComplete({ arg ->
+            if (arg.succeeded()) {
+                "println completed run with [${arg.result()}]"
+                arg.result()
+            } else {
+                "println completed run failed with ${arg.cause().message}"
+            }
+        })
     }
 
 
