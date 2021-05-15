@@ -8,6 +8,7 @@ import org.codehaus.groovy.runtime.MethodClosure
 MyActor myAct = new MyActor ("specific actor")
 myAct.start()
 myAct.run { println "myAct [${myAct.getName()}(dep:${myAct.deploymentId})] was run using dynamic dispatch, by overriding onmessage(String)  "}
+myAct.timer(1) {println "timer tick fired "}
 myAct.stop()
 
 println "script>> now use Actors static invocation "

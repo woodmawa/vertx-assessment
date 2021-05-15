@@ -15,6 +15,7 @@ import io.vertx.core.eventbus.MessageConsumer
 import io.vertx.core.json.JsonObject
 import org.codehaus.groovy.runtime.MethodClosure
 
+import java.time.Duration
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.function.Consumer
@@ -258,6 +259,37 @@ class StandardActor extends AbstractVerticle implements Actor {
         this
     }
 
+    /**
+     * one off execution timer
+     * @param Long delay in ms
+     * @param Closure scheduledWork, work to do
+     * @return Long timer id
+     */
+    long timer (long delay, Closure scheduledWork ) {
+        long tid = vertx.setTimer(delay, scheduledWork)
+    }
+
+    long timer (Duration delay, Closure scheduledWork ) {
+        long tid = vertx.setTimer(delay.toMillis(), scheduledWork)
+    }
+
+    /**
+     * periodically repeat this action on a timer
+     * @param Long delay in ms
+     * @param Closure scheduledWork, work to do
+     * @return Long timer id
+     */
+    long periodicTimer (long delay, Closure scheduledWork) {
+        long tid = vertx.setPeriodic (delay, scheduledWork)
+    }
+
+    long periodicTimer (Duration delay, Closure scheduledWork) {
+        long tid = vertx.setPeriodic (delay.toMillis(), scheduledWork)
+    }
+
+    boolean cancelTimer (long tid) {
+        vertx.cancelTimer(tid )
+    }
 
     //post and publish actions can be chained on the returned event bus
     Actor post (def args, DeliveryOptions options=null) {
