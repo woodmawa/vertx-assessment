@@ -383,17 +383,18 @@ class StandardActor extends AbstractVerticle implements Actor {
         this
     }
 
-    /**
-     * effectivel calls async request, and when reply comes back invokes the appropriate handler
-     * @param args
-     * @param onComplete
-     * @param onFail
-     * @return
-     */
-    Future<Void> rightShift (def args, Closure onComplete, Closure onFail) {
-        Future future = requestAndAsyncReply(args)
-        .onSuccess(onComplete)  //expects the completed value
-        .onFailure(onFail)  //expects a throwable
+    //with result of this request/reply invoke next actor with that result
+    Actor rightShift (StandardActor next) {
+        Future future = this.requestAndAsyncReply(1)
+                future.onComplete {ar ->
+                    if (ar.succeeded()) {
+                        def res = ar.result()
+                        next.send(ar.result())
+                    } else {
+                        log.debug "rightShift: got exeption ${ar.cause()}"
+                    }
+                }
+        next
     }
 
     // can be chained

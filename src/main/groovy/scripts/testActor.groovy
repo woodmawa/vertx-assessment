@@ -13,6 +13,7 @@ myAct.stop()
 
 println "script>> now use Actors static invocation "
 StandardActor a = Actors.actor ("fred") {println "\t--my actor.action(): actor ${getName()} action was called with [$it] "; "actorResult:$it"}
+StandardActor b = Actors.actor ("mavis ") {println "\t--my actor.action(): actor ${getName()} action was called with [$it] "; "actorResult:$it"}
 
 //blocking send&reply - no result will come back
 def result  = a.requestAndReply("will")
@@ -26,6 +27,8 @@ a.run { Promise promise ->
 }
 
 println ">>script: a.run  run code block  "
+
+a  >>  b
 
 a.send (10)
 
