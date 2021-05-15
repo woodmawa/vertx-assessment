@@ -217,17 +217,17 @@ class StandardActor extends AbstractVerticle implements Actor {
     /**
      * run method expects a handler code block which should have 1 argument which is a Promise
      *
-     * this will run
+     * the handler should complete the promise in the code block
+     *
+     * this will run the block asynchronously on a worker thread
      * @param code
      */
-    void run (code) {
+    //todo replace the StandardActor with Actor interface once we define the public contract ...
+    StandardActor run (code) {
         Context ctx = vertx.getOrCreateContext()
         Future future = ctx.executeBlocking(code)
 
-        //future.onSuccess((arg) -> "println completed run with [$arg]; arg")
-        //.onFailure((ex) -> "println run failed with $ex.message")
-
-        future.onComplete({ arg ->
+         future.onComplete({ arg ->
             if (arg.succeeded()) {
                 "println completed run with [${arg.result()}]"
                 arg.result()
@@ -235,23 +235,27 @@ class StandardActor extends AbstractVerticle implements Actor {
                 "println completed run failed with ${arg.cause().message}"
             }
         })
+        this
     }
 
 
     //post and publish actions can be chained on the returned event bus
-    EventBus post (def args, DeliveryOptions options=null) {
+    StandardActor post (def args, DeliveryOptions options=null) {
         publish (new Address (this.getAddress()), args, options)
+        this
     }
 
-    EventBus post (Address postTo, def args, DeliveryOptions options=null) {
+    StandardActor post (Address postTo, def args, DeliveryOptions options=null) {
         publish (postTo, args, options)
+        this
     }
 
-    EventBus publish (def args, DeliveryOptions options=null) {
+    StandardActor publish (def args, DeliveryOptions options=null) {
         publish (new Address (this.getAddress()), args, options)
+        this
     }
 
-    EventBus publish (Address postTo, def args, DeliveryOptions options=null) {
+    StandardActor publish (Address postTo, def args, DeliveryOptions options=null) {
         log.debug ("publish: [$args] sent to [${postTo.address}]")
 
         //wrap args in jsonObject
@@ -259,6 +263,7 @@ class StandardActor extends AbstractVerticle implements Actor {
         argsMessage.put("args", args)
 
         vertx.eventBus().publish(postTo.address, argsMessage, options ?: new DeliveryOptions ())
+        this
     }
 
     def requestAndReply(def args, DeliveryOptions options = null) {
@@ -310,13 +315,15 @@ class StandardActor extends AbstractVerticle implements Actor {
      * @param options
      * @return
      */
-    EventBus leftShift (def args, DeliveryOptions options = null) {
+    StandardActor leftShift (def args, DeliveryOptions options = null) {
         send (args, options)
+        this
     }
 
-    EventBus leftShift (Stream streamOfArgs, DeliveryOptions options = null) {
+    StandardActor leftShift (Stream streamOfArgs, DeliveryOptions options = null) {
 
         streamOfArgs.forEach(this::send)
+        this
     }
 
     /**
@@ -333,11 +340,12 @@ class StandardActor extends AbstractVerticle implements Actor {
     }
 
     // can be chained
-    EventBus send (def args, DeliveryOptions options = null) {
+    StandardActor send (def args, DeliveryOptions options = null) {
         send (new Address(this.getAddress()), args, options)
+        this
     }
 
-    EventBus send (Address postTo, def args, DeliveryOptions options = null) {
+    StandardActor send (Address postTo, def args, DeliveryOptions options = null) {
         assert postTo
         log.debug ("send: [$args] sent to [${postTo.address}]")
 
@@ -346,6 +354,7 @@ class StandardActor extends AbstractVerticle implements Actor {
         argsMessage.put("args", args)
 
         vertx.eventBus().send(postTo.address, argsMessage, options ?: new DeliveryOptions())
+        this
     }
 
 
