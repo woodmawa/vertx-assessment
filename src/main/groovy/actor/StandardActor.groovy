@@ -18,6 +18,7 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.function.Consumer
 import java.util.function.Function
+import java.util.function.Supplier
 import java.util.stream.Stream
 
 @Slf4j
@@ -87,7 +88,7 @@ class StandardActor extends AbstractVerticle implements Actor {
         this.name = Optional.ofNullable(name)
     }
 
-    //constructor
+    //constructors
 
     StandardActor (String name ) {
         this.name = Optional.ofNullable(name)
@@ -95,25 +96,51 @@ class StandardActor extends AbstractVerticle implements Actor {
 
     StandardActor (Closure action) {
         assert action
-        this.action = (Closure) action?.clone()
-        this.action?.delegate = this
+        Closure clone = (Closure) action.clone()
+        clone.delegate = this
 
-    }
+        MethodClosure mc = new MethodClosure (clone, "call")
+        mc.delegate = this
 
-    StandardActor (Function actionFunction) {
-        assert action
-        //todo is this reasonable
-        this.action = actionFunction as Closure
-        this.action?.delegate = this
-
+        this.action = mc
     }
 
     StandardActor (String name,  Closure action) {
         assert action
         this.name = Optional.ofNullable(name)
-        this.action = new MethodClosure (action, "call")
-        this.action?.delegate = this
+
+        Closure clone = action.clone()
+        clone.delegate = this
+
+        //have to set the delegate of the closure 'action' before we create the MethodClosure as this just invokes the former via the call() method
+        //so if delegate is not set it uses the initial and not the required context as the delegate for resolving methods/variables
+        MethodClosure mc = new MethodClosure (clone, "call")
+        mc.delegate = this
+        this.action = mc
    }
+
+    // code that takes 1 arg, and returns a result
+    StandardActor (Function actionFunction) {
+        assert action
+        //todo is this reasonable
+
+        MethodClosure mc = new MethodClosure (actionFunction, "apply")
+        mc.delegate = this
+
+        this.action = mc
+    }
+
+    // code that just returns a result, takes no args
+    StandardActor (Supplier actionAsSupplier) {
+        assert action
+        //todo is this reasonable
+
+        MethodClosure mc = new MethodClosure (actionAsSupplier, "get")
+        mc.delegate = this
+
+        this.action = mc
+    }
+
 
     //verticle start and stop methods
     void start(Promise<Void> promise) {
@@ -168,8 +195,10 @@ class StandardActor extends AbstractVerticle implements Actor {
     void run (code) {
         Context ctx = vertx.getOrCreateContext()
         Future future = ctx.executeBlocking(code)
+
         future.onSuccess((arg) -> "println completed run with [$arg]; arg")
-                .onFailure((ex) -> "println run failed with $ex.message")
+                //.onFailure((ex) -> "println run failed with $ex.message")
+        assert future.isComplete()
     }
 
 
@@ -303,6 +332,7 @@ class StandardActor extends AbstractVerticle implements Actor {
         Closure doBlockingAction = {Promise<Object> promise ->
             try {
                 def result
+                def actDelegate = action.delegate
                 if (action.maximumNumberOfParameters == 0) {
                     result = action()
                 } else if (action.maximumNumberOfParameters == 1) {

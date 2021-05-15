@@ -2,8 +2,11 @@ package scripts
 import actor.*
 import io.vertx.core.Promise
 import io.vertx.core.eventbus.MessageConsumer
+import org.codehaus.groovy.runtime.MethodClosure
 
-StandardActor a = Actors.actor ("fred") {println "\t--my actor [called: ${getName()}] action(): action was called with [$it] "; "actorResult:$it"}
+
+StandardActor a = Actors.actor ("fred") {println "\t--my actor.action(): actor ${getName()} action was called with [$it] "; "actorResult:$it"
+}
 
 //blocking send&reply - no result will come back
 def result  = a.requestAndReply("will")
@@ -15,6 +18,8 @@ a.run { Promise promise ->
     println "\t\t++++ run passed closure on vertx context"
     promise.complete ("run passed ok")
 }
+
+println ">>script: a.run  run code block  "
 
 a.send (10)
 
