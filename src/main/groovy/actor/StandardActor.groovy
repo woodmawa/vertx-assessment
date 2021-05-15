@@ -265,12 +265,12 @@ class StandardActor extends AbstractVerticle implements Actor {
      * @param Closure scheduledWork, work to do
      * @return Long timer id
      */
-    long timer (long delay, Closure scheduledWork ) {
-        long tid = vertx.setTimer(delay, scheduledWork)
+    Timer timer (long delay, Closure scheduledWork ) {
+        new Timer (tid: vertx.setTimer(delay, scheduledWork))
     }
 
-    long timer (Duration delay, Closure scheduledWork ) {
-        long tid = vertx.setTimer(delay.toMillis(), scheduledWork)
+    Timer timer (Duration delay, Closure scheduledWork ) {
+        new Timer (tid:vertx.setTimer(delay.toMillis(), scheduledWork))
     }
 
     /**
@@ -279,16 +279,21 @@ class StandardActor extends AbstractVerticle implements Actor {
      * @param Closure scheduledWork, work to do
      * @return Long timer id
      */
-    long periodicTimer (long delay, Closure scheduledWork) {
-        long tid = vertx.setPeriodic (delay, scheduledWork)
+    Timer periodicTimer (long delay, Closure scheduledWork) {
+        new Timer (tid:vertx.setPeriodic (delay, scheduledWork))
     }
 
-    long periodicTimer (Duration delay, Closure scheduledWork) {
-        long tid = vertx.setPeriodic (delay.toMillis(), scheduledWork)
+    Timer periodicTimer (Duration delay, Closure scheduledWork) {
+        new Timer (tid:  vertx.setPeriodic (delay.toMillis(), scheduledWork))
     }
 
     boolean cancelTimer (long tid) {
         vertx.cancelTimer(tid )
+    }
+
+    boolean cancelTimer (Timer timer) {
+        assert timer
+        vertx.cancelTimer(timer.tid )
     }
 
     //post and publish actions can be chained on the returned event bus
