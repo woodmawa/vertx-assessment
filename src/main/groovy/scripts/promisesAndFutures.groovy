@@ -7,6 +7,28 @@ import io.vertx.core.Future
 
 Vertx vertx = Vertx.vertx()
 
+Promise scrPromise = Promise.promise()
+assert scrPromise.future().isComplete() == false
+
+Timer timer = new Timer() // Instantiate Timer Object
+
+// Start running the task on Monday at 15:40:00, period is set to 8 hours
+// if you want to run the task immediately, set the 2nd parameter to 0
+Closure task = {
+    println "\ttask: in closure task on "
+    assert scrPromise.future().isComplete() == false
+    if (scrPromise.future().isComplete() == false) {
+        println "\ttask: set the scrPromise to OK"
+        scrPromise.complete("OK from task ")
+    }
+}
+timer.schedule(task , 20, 10_000)
+
+sleep (50)
+println "script: slept 50ms "
+assert scrPromise.future().isComplete() == true
+scrPromise.future().onComplete(ar -> println "scrFuture is complete with :  ${ar.result()}")
+
 void handler (Promise p) {
     def work = {
         return "delayed result, OK"
