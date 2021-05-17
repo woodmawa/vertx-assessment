@@ -266,11 +266,25 @@ class StandardActor extends AbstractVerticle implements Actor {
      * @return Long timer id
      */
     Timer timer (long delay, Closure scheduledWork ) {
-        new Timer (tid: vertx.setTimer(delay, scheduledWork))
+        assert scheduledWork
+        Promise promise = Promise.promise()
+
+        Closure withPromise = { scheduledWork(promise) }
+
+        Timer timer = new Timer (tid: vertx.setTimer(delay, withPromise ))
+        timer.future = promise.future()
+        timer
     }
 
     Timer timer (Duration delay, Closure scheduledWork ) {
-        new Timer (tid:vertx.setTimer(delay.toMillis(), scheduledWork))
+        assert scheduledWork
+        Promise promise = Promise.promise()
+
+        Closure withPromise = { scheduledWork(promise) }
+
+        Timer timer = new Timer (tid:vertx.setTimer(delay.toMillis(), withPromise))
+        timer.future = promise.future()
+        timer
     }
 
     /**
@@ -280,11 +294,25 @@ class StandardActor extends AbstractVerticle implements Actor {
      * @return Long timer id
      */
     Timer periodicTimer (long delay, Closure scheduledWork) {
-        new Timer (tid:vertx.setPeriodic (delay, scheduledWork))
+        assert scheduledWork
+        Promise promise = Promise.promise()
+
+        Closure withPromise = { scheduledWork(promise) }
+
+        Timer timer = new Timer (tid:vertx.setPeriodic (delay, scheduledWork))
+        timer.future = promise.future()
+        timer
     }
 
     Timer periodicTimer (Duration delay, Closure scheduledWork) {
-        new Timer (tid:  vertx.setPeriodic (delay.toMillis(), scheduledWork))
+        assert scheduledWork
+        Promise promise = Promise.promise()
+
+        Closure withPromise = { scheduledWork(promise) }
+
+        Timer timer = new Timer (tid:  vertx.setPeriodic (delay.toMillis(), scheduledWork))
+        timer.future = promise.future()
+        timer
     }
 
     boolean cancelTimer (long tid) {
@@ -293,7 +321,7 @@ class StandardActor extends AbstractVerticle implements Actor {
 
     boolean cancelTimer (Timer timer) {
         assert timer
-        vertx.cancelTimer(timer.tid )
+        timer.cancel()
     }
 
     //post and publish actions can be chained on the returned event bus
@@ -384,7 +412,7 @@ class StandardActor extends AbstractVerticle implements Actor {
     }
 
     //with result of this request/reply invoke next actor with that result
-    Actor rightShift (StandardActor next) {
+    /*Actor rightShift (StandardActor next) {
         Future future = this.requestAndAsyncReply(1)
                 future.onComplete {ar ->
                     if (ar.succeeded()) {
@@ -395,7 +423,7 @@ class StandardActor extends AbstractVerticle implements Actor {
                     }
                 }
         next
-    }
+    }*/
 
     // can be chained
     Actor send (def args, DeliveryOptions options = null) {

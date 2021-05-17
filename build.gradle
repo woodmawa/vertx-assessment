@@ -1,10 +1,18 @@
 plugins {
     id 'groovy'
     id 'java'
+    id 'java-library'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
 }
 
 group 'org.example'
 version '1.0-SNAPSHOT'
+
 
 repositories {
     mavenCentral()
@@ -16,6 +24,8 @@ dependencies {
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30'
     implementation group: 'org.fusesource.jansi', name: 'jansi', version: '2.3.2'  //for colors
 
+
+    implementation group: 'com.hazelcast', name: 'hazelcast', version: '4.2'
 
     implementation group: 'io.vertx', name: 'vertx-core', version: '4.0.3'
     implementation group: 'io.vertx', name: 'vertx-lang-groovy', version: '4.0.3'

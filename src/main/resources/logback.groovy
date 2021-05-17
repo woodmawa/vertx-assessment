@@ -47,6 +47,7 @@ appender("PlainConsole", ConsoleAppender) {
 logger ("io.vertx.core", WARN)
 logger ("io.netty", WARN)
 logger ("ch.qos.logback.classic", WARN)
+logger ("com.hazelcast", WARN)
 
 logger "datastore", DEBUG
 //logger "datastore", Level.DEBUG, ["Console"]  //causes it print it twice!

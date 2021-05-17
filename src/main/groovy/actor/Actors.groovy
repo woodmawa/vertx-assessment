@@ -1,15 +1,42 @@
 package actor
 
 import groovy.util.logging.Slf4j
+import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import io.vertx.core.Verticle
+import io.vertx.core.VertxOptions
+import io.vertx.core.Future
 
 import java.util.concurrent.ConcurrentHashMap
 
 @Slf4j
 class Actors {
 
-    static Vertx vertx =  Vertx.vertx()
+    static Vertx vertx
+    static Future clusterInit () {
+        VertxOptions clusterOptions = new VertxOptions()
+
+        //todo read some options from the environment here
+        Promise clusterStartPromise = Promise.promise()
+        Vertx.clusteredVertx(clusterOptions, ar -> {
+            if (ar.succeeded()) {
+                println  "clustered vertx started successfully "
+                vertx = ar.result()
+                clusterStartPromise.complete(vertx)
+            } else {
+                println("couldn't start clustered vertx, reason : ${ar.cause().message}")
+                clusterStartPromise.fail(new RuntimeException("clusteredVertx failed to start with ${ar.cause().message}"))
+            }
+        })
+
+        clusterStartPromise.future()
+    }
+
+    static void localInit () {
+        vertx = Vertx.vertx()
+    }
+
+
     static HashMap deployedActors = new ConcurrentHashMap<>()
 
     static List<String> activeActors () {

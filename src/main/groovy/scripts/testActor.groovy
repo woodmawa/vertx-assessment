@@ -1,10 +1,23 @@
 package scripts
 import actor.*
 import io.vertx.core.Promise
+import io.vertx.core.Future
 import io.vertx.core.eventbus.MessageConsumer
 import org.codehaus.groovy.runtime.MethodClosure
 
+/*Future cstart = Actors.clusterInit()
+cstart.onComplete(ar -> {
+    if (ar.succeeded()) {
+        println  "clustered vertx started successfully with ${ar.result()}"
+    } else {
+        println("couldn't start clustered vertx, reason : ${ar.cause().message}")
+    }
+})*/
 
+Actors.localInit()
+
+
+println "waited 5 seconds to start cluster"
 MyActor myAct = new MyActor ("specific actor")
 myAct.start()
 myAct.run { println "myAct [${myAct.getName()}(dep:${myAct.deploymentId})] was run using dynamic dispatch, by overriding onmessage(String)  "}
@@ -28,7 +41,7 @@ a.run { Promise promise ->
 
 println ">>script: a.run  run code block  "
 
-a  >>  b
+//a  >>  b - doesnt work yet
 
 a.send (10)
 
