@@ -21,7 +21,9 @@ println "waited 5 seconds to start cluster"
 MyActor myAct = new MyActor ("specific actor")
 myAct.start()
 myAct.run { println "myAct [${myAct.getName()}(dep:${myAct.deploymentId})] was run using dynamic dispatch, by overriding onmessage(String)  "}
-myAct.timer(1) {println "timer tick fired "}
+Timer myTimer = myAct.timer(1) {Promise promise -> println "timer tick fired "; promise.complete ("timer OK")}
+
+myTimer.future().onComplete{println "\ttimer action  returned ${it.result()}" }
 myAct.stop()
 
 println "script>> now use Actors static invocation "
@@ -62,7 +64,7 @@ a.publish (reports, "want my report right now please ")
 a.publish(" & Marian ")
 println ">>script: publish, async and no return  "
 
-def vertx = Actors.vertx
+def vertx = Actors.vertx()
 
 println ">>script: actor a got deploymentId : ${a.deploymentId}"
 

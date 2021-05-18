@@ -150,7 +150,7 @@ class StandardActor extends AbstractVerticle implements Actor {
         log.debug ("${this.getClass().name}.start() : manually starting  actor  ${this.getName()} ")
 
         //get reference to static Actors.vertx and use that
-        Vertx vertx = Actors.vertx
+        Vertx vertx = Actors.vertx()
 
         // deploy action then invokes start(Promise) method asynchronously which registers the default listener
         Future future = vertx.deployVerticle(this )
@@ -174,7 +174,7 @@ class StandardActor extends AbstractVerticle implements Actor {
         consumers.each {it.unregister()}
         consumers.clear()
 
-        Vertx vertx = Actors.vertx
+        Vertx vertx = Actors.vertx()
         Future future = vertx.undeploy(this.deploymentId)
         future.onComplete({ar ->
             if (ar.succeeded()) {
@@ -299,7 +299,8 @@ class StandardActor extends AbstractVerticle implements Actor {
 
         Closure withPromise = { scheduledWork(promise) }
 
-        Timer timer = new Timer (tid:vertx.setPeriodic (delay, scheduledWork))
+        //todo this may not work with repeated timer ticks
+        Timer timer = new Timer (tid:vertx.setPeriodic (delay, withPromise))
         timer.future = promise.future()
         timer
     }
@@ -310,9 +311,13 @@ class StandardActor extends AbstractVerticle implements Actor {
 
         Closure withPromise = { scheduledWork(promise) }
 
-        Timer timer = new Timer (tid:  vertx.setPeriodic (delay.toMillis(), scheduledWork))
+        Timer timer = new Timer (tid:  vertx.setPeriodic (delay.toMillis(), withPromise))
         timer.future = promise.future()
         timer
+    }
+
+    streamingTimer (long delay, Closure scheduledWork) {
+
     }
 
     boolean cancelTimer (long tid) {

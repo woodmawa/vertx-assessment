@@ -13,6 +13,14 @@ import java.util.concurrent.ConcurrentHashMap
 class Actors {
 
     static Vertx vertx
+
+    static vertx() {
+        if (!vertx) {
+            throw new ExceptionInInitializerError("Actors context has not been initialised, use localInit() or clusteredInit() first  ")
+        }
+        vertx
+    }
+
     static Future clusterInit () {
         VertxOptions clusterOptions = new VertxOptions()
 
@@ -59,7 +67,7 @@ class Actors {
         Verticle v = actor as Verticle
 
         //deploy this specific verticle instance
-        vertx.deployVerticle(v, {ar ->
+        vertx().deployVerticle(v, {ar ->
             if (ar.succeeded()) {
                 actor.deploymentId = ar.result()
                 deployedActors.put(ar.result(), actor)
@@ -82,7 +90,7 @@ class Actors {
         Verticle v = actor as Verticle
 
         //deploy this specific verticle instance
-        vertx.deployVerticle(v, {ar ->
+        vertx().deployVerticle(v, {ar ->
             if (ar.succeeded()) {
                 actor.deploymentId = ar.result()
                 deployedActors.put(ar.result(), actor)
@@ -100,7 +108,7 @@ class Actors {
 
     static shutdown () {
         log.debug ">>Actors.shutdown(): ${deployedActors.size()} to be shutdown "
-        vertx.close(ar -> {
+        vertx().close(ar -> {
             if (ar.succeeded()) {
                 log.debug ">>Actors.shutdown(): close handler: actor network closed successfully "
                 deployedActors.clear()
