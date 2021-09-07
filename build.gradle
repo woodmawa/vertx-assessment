@@ -21,16 +21,16 @@ repositories {
 dependencies {
 
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
-    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30'
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.32'
     implementation group: 'org.fusesource.jansi', name: 'jansi', version: '2.3.2'  //for colors
 
 
-    implementation group: 'com.hazelcast', name: 'hazelcast', version: '4.2'
+    implementation group: 'com.hazelcast', name: 'hazelcast', version: '4.2.2'
 
-    implementation group: 'io.vertx', name: 'vertx-core', version: '4.0.3'
-    implementation group: 'io.vertx', name: 'vertx-lang-groovy', version: '4.0.3'
-    implementation group: 'io.vertx', name: 'vertx-hazelcast', version: '4.0.3'
-    testImplementation group: 'io.vertx', name: 'vertx-unit', version: '4.0.3'
+    implementation group: 'io.vertx', name: 'vertx-core', version: '4.1.3'
+    implementation group: 'io.vertx', name: 'vertx-lang-groovy', version: '4.1.3'
+    implementation group: 'io.vertx', name: 'vertx-hazelcast', version: '4.1.3'
+    testImplementation group: 'io.vertx', name: 'vertx-unit', version: '4.1.3'
 
     //rest
     implementation 'org.codehaus.groovy:groovy-all:3.0.8'
