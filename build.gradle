@@ -22,7 +22,7 @@ dependencies {
 
     implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.32'
-    implementation group: 'org.fusesource.jansi', name: 'jansi', version: '2.3.2'  //for colors
+    implementation group: 'org.fusesource.jansi', name: 'jansi', version: '2.3.4'  //for colors
 
 
     implementation group: 'com.hazelcast', name: 'hazelcast', version: '4.2.2'
