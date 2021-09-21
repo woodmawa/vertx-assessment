@@ -316,8 +316,8 @@ class StandardActor extends AbstractVerticle implements Actor {
         timer
     }
 
-    streamingTimer (long delay, Closure scheduledWork) {
-
+    Timer streamingTimer (long delay, Closure scheduledWork) {
+        null  //fix this
     }
 
     boolean cancelTimer (long tid) {
