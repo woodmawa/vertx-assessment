@@ -23,6 +23,9 @@ String vertxVersion = "4.2.3"
 String junitJupiterVersion = "5.8.2"
 String hazelCastVersion = "5.0.2"
 String groovyVersion = "3.0.9"
+String spockVersion = "2.0-groovy-3.0"
+String MicronautVersion  = "3.2.6"
+
 
 dependencies {
 
@@ -43,6 +46,15 @@ dependencies {
 
     //rest
     implementation "org.codehaus.groovy:groovy-all:$groovyVersion"
+
+    annotationProcessor(platform("io.micronaut:micronaut-bom:$MicronautVersion")) // D1
+    annotationProcessor("io.micronaut:micronaut-inject-java") // D2
+    annotationProcessor("io.micronaut:micronaut-inject-groovy") // D2
+
+    compileOnly(platform("io.micronaut:micronaut-bom:$MicronautVersion")) // D3
+    compileOnly("io.micronaut:micronaut-inject") // D4
+    compileOnly group: 'io.micronaut', name: 'micronaut-inject-groovy', version: MicronautVersion
+
 
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "$junitJupiterVersion"
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "$junitJupiterVersion"
