@@ -16,6 +16,10 @@ interface Engine {
 @Retention (RetentionPolicy.RUNTIME)
 @interface V6 {}
 
+@Qualifier
+@Retention (RetentionPolicy.RUNTIME)
+@interface V4 {}
+
 @Singleton
 class V8Engine implements Engine {
     int cylinders = 8
@@ -34,19 +38,36 @@ class V6Engine implements Engine {
     }
 }
 
+@Singleton
+class V4Engine implements Engine {
+    int cylinders = 4
+
+    String start() {
+        "Starting V4 Engine"
+    }
+}
+
 class Vehicle {
     final Engine engine
-    final Engine smallerEngine
+    Engine smallerEngine
+    @Inject @V4  Engine v4Engine
 
+    //constructor injection - singl public constructor or
+    //single constructor annoted with @inject
     @Inject Vehicle (@Named('v8') Engine engine) {
         this.engine = engine
     }
 
-    /*@Inject Vehicle (@V6  Engine smallerEngine) {
-        this.engine = smallerEngine
-    }*/
+    //method bean property injection
+    @Inject
+    void setSmallerEngine (@V6  Engine smallerEngine) {
+        this.smallerEngine = smallerEngine
+    }
 
     String start () {
-        engine.start()
+        println "start: " + engine.start()
+        println "start: " + smallerEngine.start()
+        println "start: " + v4Engine.start()
+
     }
 }

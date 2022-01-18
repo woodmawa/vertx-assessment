@@ -53,6 +53,10 @@ dependencies {
     annotationProcessor("io.micronaut:micronaut-inject-java") // D2
     annotationProcessor("io.micronaut:micronaut-inject-groovy") // D2
 
+    //testAnnnotationProcessor(platform("io.micronaut:micronaut-bom:$MicronautVersion")) // - doesnt exist ?
+    testAnnotationProcessor "io.micronaut:micronaut-inject-java"
+    testAnnotationProcessor "io.micronaut:micronaut-inject-groovy"
+
     compileOnly(platform("io.micronaut:micronaut-bom:$MicronautVersion")) // D3
     compileOnly("io.micronaut:micronaut-inject") // D4
     compileOnly group: 'io.micronaut', name: 'micronaut-inject-groovy', version: MicronautVersion
@@ -61,6 +65,9 @@ dependencies {
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "$junitJupiterVersion"
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "$junitJupiterVersion"
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: "$junitJupiterVersion"
+
+    testImplementation platform("io.micronaut:micronaut-bom:$MicronautVersion")
+    testImplementation "io.micronaut.test:micronaut-test-junit5"
 
     testImplementation 'org.spockframework:spock-core:2.0-groovy-3.0'
  }

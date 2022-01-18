@@ -13,6 +13,7 @@ class Application {
         Vehicle v = context.run().getBean(Vehicle)
 
         println v.start()
+        //println v.v4Engine.start()
 
 
         println "app stopping"
