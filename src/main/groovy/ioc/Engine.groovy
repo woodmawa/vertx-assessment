@@ -1,8 +1,10 @@
 package ioc
 
+import io.micronaut.context.annotation.Prototype
 import jakarta.inject.Inject
 import jakarta.inject.Named
 
+import javax.annotation.PostConstruct
 import javax.inject.*
 import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy
@@ -19,6 +21,10 @@ interface Engine {
 @Qualifier
 @Retention (RetentionPolicy.RUNTIME)
 @interface V4 {}
+
+@Qualifier
+@Retention (RetentionPolicy.RUNTIME)
+@interface V2 {}
 
 @Singleton
 class V8Engine implements Engine {
@@ -47,10 +53,38 @@ class V4Engine implements Engine {
     }
 }
 
+@Prototype
+class CrankShaft {
+
+    String toString() {
+        "metal crankshaft"
+    }
+}
+
+//see engineFactory
+@Singleton
+class V2Engine implements Engine {
+    int cylinders = 4
+    CrankShaft shaft
+
+    V2Engine (CrankShaft crankShaft) {
+        shaft = crankShaft
+    }
+
+    String start() {
+        "Starting V2 Engine, with crankShaft = $shaft"
+    }
+
+    @PostConstruct
+    void initialise() {}
+
+}
+
 class Vehicle {
     final Engine engine
     Engine smallerEngine
     @Inject @V4  Engine v4Engine
+    @Inject @V2  Engine v2Engine
 
     //constructor injection - singl public constructor or
     //single constructor annoted with @inject
@@ -68,6 +102,7 @@ class Vehicle {
         println "start: " + engine.start()
         println "start: " + smallerEngine.start()
         println "start: " + v4Engine.start()
-
+        println "start: " + v2Engine.start()
+        "Vehicle all OK"
     }
 }
