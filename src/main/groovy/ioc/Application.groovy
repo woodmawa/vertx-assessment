@@ -1,6 +1,9 @@
 package ioc
 
 import io.micronaut.context.ApplicationContext
+import jdk.internal.jimage.ImageReader
+import org.apache.tools.ant.types.selectors.TypeSelector
+import groovy.yaml.YamlSlurper
 
 class Application {
 
@@ -17,7 +20,29 @@ class Application {
         conf.put('system', sysProps)
         conf.putAll(envMap)
 
-        println "app starting"
+        conf.put('projectPath', System.getProperty("user.dir"))
+        conf.put('resourcesPath', resourcePath.toString())
+
+        File resourceDirectory = new File ("${System.getProperty("user.dir")}$File.separatorChar$resourcePath")
+        FilenameFilter filter = {file, name -> name.matches(~/^.*properties$/) }
+        List propsFiles = resourceDirectory.listFiles (filter)
+
+        filter = {file, name -> name.matches(~/^.*yaml$/) }
+        List yamlFiles = resourceDirectory.listFiles (filter)
+
+        propsFiles.each {file ->
+            Properties prop = new Properties()
+            prop.load(new FileInputStream (file) )
+            Map propsMap = prop.inject([:]) {result, entry -> [entry.key:entry.value]}//prop.getProperties()
+            propsMap.remove('class')
+            propsMap.remove('empty')
+            conf.putAll(propsMap)
+        }
+
+        yamlFiles.each {file ->
+            def yamlConfig = new YamlSlurper().parseText(file.text)
+            conf.putAll(yamlConfig)
+        }
 
         ApplicationContext context = ApplicationContext.run()
 

@@ -46,6 +46,7 @@ dependencies {
 
     //rest
     implementation "org.codehaus.groovy:groovy-all:$groovyVersion"
+    implementation "org.codehaus.groovy:groovy-yaml:$groovyVersion"
 
     implementation group: 'javax.inject', name: 'javax.inject', version: '1'
 
