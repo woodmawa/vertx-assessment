@@ -62,7 +62,7 @@ class CrankShaft {
 }
 
 //see engineFactory
-@Singleton
+//@Singleton
 class V2Engine implements Engine {
     int cylinders = 4
     CrankShaft shaft
@@ -84,7 +84,7 @@ class Vehicle {
     final Engine engine
     Engine smallerEngine
     @Inject @V4  Engine v4Engine
-    @Inject @V2  Engine v2Engine
+    //@Inject @V2  Engine v2Engine
 
     //constructor injection - singl public constructor or
     //single constructor annoted with @inject
@@ -102,7 +102,7 @@ class Vehicle {
         println "start: " + engine.start()
         println "start: " + smallerEngine.start()
         println "start: " + v4Engine.start()
-        println "start: " + v2Engine.start()
+        //println "start: " + v2Engine.start()
         "Vehicle all OK"
     }
 }

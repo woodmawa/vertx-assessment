@@ -16,11 +16,12 @@ class ConfigurationFactory {
         def sysProps = System.getenv()
         if (System.getProperty("env") ) {
             envMap = System.getenv().findResult { it.key?.toLowerCase().contains "env" }.collect { [(it.key?.toLowerCase().substring(0, 2)): it.value.toLowerCase()] }
-        }
-        def env = envMap.get ('env', "development")
+        } else
+            envMap.get ('env', "development")
+        def env = envMap.get('env')
 
         def resourcePath = "src${File.separatorChar}${env =="test" ?: "main"}${File.separatorChar}resources${File.separatorChar}"
-        ConfigObject config = new ConfigSlurper("development").parse(new File("${resourcePath}ApplicationConfig.groovy").toURI().toURL())
+        ConfigObject config = new ConfigSlurper().parse(new File("${resourcePath}ApplicationConfig.groovy").text /*.toURI().toURL()*/)
         config.put('systemProperties', sysProps)
         config.putAll(envMap)
 

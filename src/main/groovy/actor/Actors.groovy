@@ -1,27 +1,45 @@
 package actor
 
 import groovy.util.logging.Slf4j
+import io.micronaut.context.annotation.Requires
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import io.vertx.core.Verticle
 import io.vertx.core.VertxOptions
 import io.vertx.core.Future
 
+import io.micronaut.context.annotation.Bean
+import io.micronaut.context.annotation.Factory
+import jakarta.inject.Named
+
 import java.util.concurrent.ConcurrentHashMap
 
+@Factory
 @Slf4j
 class Actors {
 
     static Vertx vertx
 
-    static vertx() {
-        if (!vertx) {
-            throw new ExceptionInInitializerError("Actors context has not been initialised, use localInit() or clusteredInit() first  ")
-        }
-        vertx
-    }
+    static Future futureServer
 
-    static Future clusterInit () {
+    static vertx() {
+        if (futureServer == null && !vertx) {
+            throw new ExceptionInInitializerError("Actors context has not been initialised, use localInit() or clusteredInit() first  ")
+        } else if (futureServer.isComplete()){
+            if (futureServer.succeeded()) {
+                return vertx
+            } else {
+                return futureServer.cause()
+            }
+        } else
+            futureServer
+     }
+
+    //micronaught expects instance methods when using the StartupCondition as shown
+    @Bean
+    @Named ('server')
+    @Requires(condition = StartupCondition)
+    Future clusterInit () {
         VertxOptions clusterOptions = new VertxOptions()
 
         //todo read some options from the environment here
@@ -37,11 +55,18 @@ class Actors {
             }
         })
 
-        clusterStartPromise.future()
+        futureServer = clusterStartPromise.future()
     }
 
-    static void localInit () {
+    @Bean
+    //@Named ('server')
+    @Requires(condition = StartupCondition)
+    Future localInit () {
+        Promise startPromise = Promise.promise()
+
         vertx = Vertx.vertx()
+        startPromise.complete(vertx)
+        futureServer = startPromise.future()
     }
 
 

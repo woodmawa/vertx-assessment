@@ -1,4 +1,10 @@
 
+
+//serverMode = framework.environments."$env".server
+//serverMode = framework.environments."$env".server
+
+
+
 framework {
     environments {
         development {
