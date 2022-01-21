@@ -22,13 +22,19 @@ class Actors {
 
     static Future futureServer
 
+    /*
+     * incase in clustered mode we have to check if the future succeeded or not
+     * if not complete yet - just return the pending future
+     */
     static vertx() {
         if (futureServer == null && !vertx) {
             throw new ExceptionInInitializerError("Actors context has not been initialised, use localInit() or clusteredInit() first  ")
         } else if (futureServer.isComplete()){
             if (futureServer.succeeded()) {
+                //ok to return the vertx
                 return vertx
             } else {
+                //if failed return the cause
                 return futureServer.cause()
             }
         } else
