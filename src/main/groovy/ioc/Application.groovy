@@ -26,13 +26,13 @@ class Application {
         env = context.getEnvironment()
 
         ConfigObject appConfig = context.run().getBean(ConfigObject)
-        Future server  = context.run().getBean(Future, Qualifiers.byName('vertx'))
+        Future actorVertx  = context.run().getBean(Future, Qualifiers.byName('vertx'))
 
         Vehicle v = context.run().getBean(Vehicle)
 
         println v.start()
 
-        server.onComplete{ar ->
+        actorVertx.onComplete{ar ->
             if (ar.succeeded()) {
                 def vertx = ar.result()
                 println "future, ${appConfig.framework.serverMode} vertx started, with $vertx"
