@@ -1,32 +1,27 @@
 
 
-//serverMode = framework.environments."$env".server
-//serverMode = framework.environments."$env".server
-
-
-
 framework {
-    environments {
-        development {
-            server = "local" // choice of {local|clustered}
-            vertxOptions {
+    serverMode = "local"
+    vertxOptions {
 
-            }
+    }
+}
 
-        }
-        test {
-            server = "local" // choice of {local|clustered}
-            vertxOptions {
+//config slurper will update framework from any matched environment in constructor call
+environments {
+    development {
+        framework.serverMode = "local" // choice of {local|clustered}
+        framework.vertxOptions = [:]
 
-            }
+    }
+    test {
+        framework.serverMode = "local" // choice of {local|clustered}
+        framework.vertxOptions = [:]
 
-        }
-        production {
-            server = "clustered" // choice of {local|clustered}
-            vertxOptions {
+    }
+    production {
+        framework.serverMode = "clustered" // choice of {local|clustered}
+        framework.vertxOptions = [:]
 
-            }
-
-        }
     }
 }

@@ -12,17 +12,17 @@ import io.vertx.core.Future
 import javax.inject.Inject
 
 
-class StartupCondition implements Condition{
+class ClusteredStartupCondition implements Condition{
 
     private ConfigObject appConfig
 
     private AnnotationMetadata annotationMetadata
 
-    public StartupCondition(AnnotationMetadata annotationMetadata) {
+    public ClusteredStartupCondition(AnnotationMetadata annotationMetadata) {
         this.annotationMetadata = annotationMetadata
     }
 
-    public StartupCondition () {
+    public ClusteredStartupCondition() {
 
     }
 
@@ -35,17 +35,8 @@ class StartupCondition implements Condition{
         appConfig = ApplicationContext.run().getBean (ConfigObject)  //should be inject
         if (beanContext instanceof ApplicationContext) {
 
-            env = appConfig.env
-            Map m = appConfig.flatten()
-            Set s = appConfig.entrySet()
-            def framework = appConfig.get ("framework")
-            def environments = appConfig.get ("framework.environments")
-            def devEnv = appConfig.get ("framework.environments.development")
-            def server = appConfig.get ("framework.environments.development.server")
 
-            String startupMode = appConfig.get(env)
-            //hack
-            startupMode ='clustered'
+            String startupMode = appConfig.framework.serverMode
             if (startupMode) {
                 if (startupMode == 'clustered')
                     return true

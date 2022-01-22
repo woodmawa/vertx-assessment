@@ -1,24 +1,18 @@
 package ioc
 
 import actor.Actors
-import actor.StartupCondition
 import io.micronaut.context.ApplicationContext
-import io.micronaut.context.BeanContext
 import io.micronaut.context.env.Environment
 import io.micronaut.inject.qualifiers.Qualifiers
 import io.vertx.core.Future
-import jdk.internal.jimage.ImageReader
-import org.apache.tools.ant.types.selectors.TypeSelector
-import groovy.yaml.YamlSlurper
 
-import javax.inject.Inject
 import javax.inject.Qualifier
 import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy
 
 @Qualifier
 @Retention (RetentionPolicy.RUNTIME)
-@interface Server {}
+@interface vertx {}
 
 class Application {
 
@@ -31,8 +25,8 @@ class Application {
 
         env = context.getEnvironment()
 
-            ConfigObject appConfig = context.run().getBean(ConfigObject)
-        Future server  = context.run().getBean(Future, Qualifiers.byName('server'))
+        ConfigObject appConfig = context.run().getBean(ConfigObject)
+        Future server  = context.run().getBean(Future, Qualifiers.byName('vertx'))
 
         Vehicle v = context.run().getBean(Vehicle)
 
@@ -41,7 +35,7 @@ class Application {
         server.onComplete{ar ->
             if (ar.succeeded()) {
                 def vertx = ar.result()
-                println "future, clustered vertx started, with $vertx"
+                println "future, ${appConfig.framework.serverMode} vertx started, with $vertx"
 
                 println "app stopping"
                 Actors.shutdown()

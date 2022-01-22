@@ -1,4 +1,4 @@
-package ioc
+package appconfig
 
 import groovy.yaml.YamlSlurper
 import io.micronaut.context.annotation.Bean
@@ -21,7 +21,8 @@ class ConfigurationFactory {
         def env = envMap.get('env')
 
         def resourcePath = "src${File.separatorChar}${env =="test" ?: "main"}${File.separatorChar}resources${File.separatorChar}"
-        ConfigObject config = new ConfigSlurper().parse(new File("${resourcePath}ApplicationConfig.groovy").text /*.toURI().toURL()*/)
+        //use config slurper with default env setting - updates any defaults from matched environment
+        ConfigObject config = new ConfigSlurper("$env").parse(new File("${resourcePath}ApplicationConfig.groovy").text )
         config.put('systemProperties', sysProps)
         config.putAll(envMap)
 

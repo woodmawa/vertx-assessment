@@ -43,13 +43,14 @@ class Actors {
 
     //micronaught expects instance methods when using the StartupCondition as shown
     @Bean
-    @Named ('server')
-    @Requires(condition = StartupCondition)
+    @Named ('vertx')
+    @Requires(condition = ClusteredStartupCondition)
     Future clusterInit () {
         VertxOptions clusterOptions = new VertxOptions()
 
         //todo read some options from the environment here
         Promise clusterStartPromise = Promise.promise()
+        //this takes some time to start - dont block and wait for callback
         Vertx.clusteredVertx(clusterOptions, ar -> {
             if (ar.succeeded()) {
                 println  "clustered vertx started successfully "
@@ -65,8 +66,8 @@ class Actors {
     }
 
     @Bean
-    //@Named ('server')
-    @Requires(condition = StartupCondition)
+    @Named ('vertx')
+    @Requires(condition = LocalStartupCondition)
     Future localInit () {
         Promise startPromise = Promise.promise()
 

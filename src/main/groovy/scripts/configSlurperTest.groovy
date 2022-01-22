@@ -3,13 +3,16 @@ package scripts
 def configText = """
 
 framework {
+    server = "default"
+    vertxOptions {
+        map = [:]
+    }
+}
+
     environments {
         development {
-            server = "local" // choice of {local|clustered}
-            vertxOptions {
-
-            }
-
+            framework.server = "local" // choice of {local|clustered}
+            framework.vertxOptions.map = [over:"added data"]
         }
         test {
             server = "local" // choice of {local|clustered}
@@ -26,8 +29,8 @@ framework {
 
         }
     }
-}
+
 """
 
-ConfigObject conf = new ConfigSlurper().parse(configText)
-assert conf.framework?.environments?.size() == 3
+ConfigObject conf = new ConfigSlurper("development").parse(configText)
+println conf
