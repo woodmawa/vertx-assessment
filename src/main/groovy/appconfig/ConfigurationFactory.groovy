@@ -16,15 +16,12 @@ class ConfigurationFactory {
         def sysProps = System.getenv()
         if (System.getProperty("env") ) {
             envMap = System.getenv().findResult { it.key?.toLowerCase().contains "env" }.collect { [(it.key?.toLowerCase().substring(0, 2)): it.value.toLowerCase()] }
-        } else
-            envMap.get ('env', "development")
-        def env = envMap.get('env')
+        }
 
         def resourcePath = "src${File.separatorChar}${env =="test" ?: "main"}${File.separatorChar}resources${File.separatorChar}"
         //use config slurper with default env setting - updates any defaults from matched environment
         ConfigObject config = new ConfigSlurper("$env").parse(new File("${resourcePath}ApplicationConfig.groovy").text )
         config.put('systemProperties', sysProps)
-        config.putAll(envMap)
 
         config.put('projectPath', System.getProperty("user.dir"))
         config.put('resourcesPath', resourcePath.toString())
@@ -50,6 +47,11 @@ class ConfigurationFactory {
             def yamlConfig = new YamlSlurper().parseText(file.text)
             config.putAll(yamlConfig)
         }
+
+        if (envMap) //if env declared as system property update as default
+            config.putAll(envMap)
+        else
+            envMap.get ('env', "development")  //if env not set - use development as default
 
         config
     }
