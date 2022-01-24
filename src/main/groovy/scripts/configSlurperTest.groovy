@@ -9,26 +9,23 @@ framework {
     }
 }
 
-    environments {
-        development {
-            framework.server = "local" // choice of {local|clustered}
-            framework.vertxOptions.map = [over:"added data"]
+environments {
+    development {
+        framework.server = "local" // choice of {local|clustered}
+        framework.vertxOptions.map = [over:"added data"]
+    }
+    test {
+        server = "local" // choice of {local|clustered}
+        vertxOptions {
         }
-        test {
-            server = "local" // choice of {local|clustered}
-            vertxOptions {
-
-            }
-
-        }
-        production {
-            server = "clustered" // choice of {local|clustered}
-            vertxOptions {
-
-            }
+    }
+    production {
+        server = "clustered" // choice of {local|clustered}
+        vertxOptions {
 
         }
     }
+}
 
 """
 
