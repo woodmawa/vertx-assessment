@@ -1,6 +1,7 @@
 package actor
 
 import groovy.util.logging.Slf4j
+import io.micronaut.context.annotation.Prototype
 import io.micronaut.context.annotation.Requires
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
@@ -119,6 +120,29 @@ class Actors {
 
     static Actor actor (Closure action=null) {
         StandardActor actor = new StandardActor (action)
+        Verticle v = actor as Verticle
+
+        //deploy this specific verticle instance
+        vertx().deployVerticle(v, {ar ->
+            if (ar.succeeded()) {
+                actor.deploymentId = ar.result()
+                deployedActors.put(ar.result(), actor)
+
+                log.debug ("Actors.actor(): started verticle $this successfully and got deploymentId ${ar.result()}")
+
+                //whoopee
+            } else {
+                log.debug ("Actors.actor(): deployVerticle $this encountered a problem ${ar.cause().message}")
+            }
+        })
+
+        actor
+    }
+
+    @Bean
+    @Prototype
+    Actor actorGenerator () {
+        StandardActor actor = new StandardActor ()
         Verticle v = actor as Verticle
 
         //deploy this specific verticle instance

@@ -1,5 +1,6 @@
 package ioc
 
+import actor.Actor
 import actor.Actors
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.env.Environment
@@ -34,6 +35,11 @@ class Application {
             if (ar.succeeded()) {
                 def vertx = ar.result()
                 println "future, ${appConfig.framework.serverMode} vertx started, with $vertx"
+
+                Actor actorByLookup = context.run().getBean(Actor)
+                assert actorByLookup
+                TestActorDI testActor = new TestActorDI()
+                assert testActor.actor  // injection should work
 
                 println "app stopping"
                 Actors.shutdown()
