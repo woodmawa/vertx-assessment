@@ -18,7 +18,7 @@ class ClusteredStartupCondition implements Condition{
 
     private ConfigObject appConfig
 
-    @Inject  void setAppConfig (@Named ('config') ConfigObject config) {
+    @Inject  void setAppConfig (@Named ('appConfig') ConfigObject config) {
         println "clusteredStartup injected $config"
         appConfig = config
     }

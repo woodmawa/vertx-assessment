@@ -16,7 +16,7 @@ class LocalStartupCondition implements Condition{
 
     private ConfigObject appConfig
 
-    @Inject  void setAppConfig (@Named ('config') ConfigObject config) {
+    @Inject  void setAppConfig (@Named ('appConfig') ConfigObject config) {
         println "localStartupinjected $config"
         appConfig = config
     }

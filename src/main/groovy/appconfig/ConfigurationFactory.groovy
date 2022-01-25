@@ -9,7 +9,7 @@ import jakarta.inject.Named
 class ConfigurationFactory {
 
     @Bean
-    @Named('config')
+    @Named('appConfig')
     ConfigObject config () {
 
         Map envMap = [:]
