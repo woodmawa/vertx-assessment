@@ -43,7 +43,7 @@ class Actors {
 
     //micronaught expects instance methods when using the StartupCondition as shown
     @Bean
-    @Named ('vertx')
+    @Named ('Actors-Vertx')
     @Requires(condition = ClusteredStartupCondition)
     Future clusterInit () {
         VertxOptions clusterOptions = new VertxOptions()
@@ -66,7 +66,7 @@ class Actors {
     }
 
     @Bean
-    @Named ('vertx')
+    @Named ('Actors-Vertx')
     @Requires(condition = LocalStartupCondition)
     Future localInit () {
         Promise startPromise = Promise.promise()
