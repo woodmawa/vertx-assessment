@@ -67,7 +67,8 @@ class V2Engine implements Engine {
     int cylinders = 4
     CrankShaft shaft
 
-    V2Engine (CrankShaft crankShaft) {
+    @Inject V2Engine (CrankShaft crankShaft) {
+        println "V2Engine gets an injected crankshft $crankShaft"
         shaft = crankShaft
     }
 
@@ -84,7 +85,7 @@ class Vehicle {
     final Engine engine
     Engine smallerEngine
     @Inject @V4  Engine v4Engine
-    //@Inject @V2  Engine v2Engine
+    @Inject @V2  Engine v2Engine
 
     //constructor injection - singl public constructor or
     //single constructor annoted with @inject

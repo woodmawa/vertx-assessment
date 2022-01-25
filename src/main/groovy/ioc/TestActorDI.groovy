@@ -5,9 +5,5 @@ import actor.Actor
 import javax.inject.Inject
 
 class TestActorDI {
-
-    @Inject Actor actor //should be prototype unnamed actor
-
-
-
+    @Inject Actor actor //should inject a prototype unnamed actor
 }
