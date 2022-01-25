@@ -1,1 +1,3 @@
 language: groovy
+
+yamlProp : "some value"

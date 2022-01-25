@@ -14,18 +14,18 @@ class ConfigurationFactory {
 
         Map envMap = [:]
         def sysProps = System.getenv()
-        if (System.getProperty("env") ) {
-            envMap = System.getenv().findResult { it.key?.toLowerCase().contains "env" }.collect { [(it.key?.toLowerCase().substring(0, 2)): it.value.toLowerCase()] }
+        //see if env is defined in system properties first
+        if (sysProps["env"] ) {
+            envMap.put ("env", sysProps["env"])
         }
 
-        def resourcePath = "src${File.separatorChar}${env =="test" ?: "main"}${File.separatorChar}resources${File.separatorChar}"
-        //use config slurper with default env setting - updates any defaults from matched environment
-        ConfigObject config = new ConfigSlurper("$env").parse(new File("${resourcePath}ApplicationConfig.groovy").text )
-        config.put('systemProperties', sysProps)
+        //if not defined set default in envMap as development
+        def env = envMap.get ('env', "development")
 
-        config.put('projectPath', System.getProperty("user.dir"))
-        config.put('resourcesPath', resourcePath.toString())
+        //based on this value figure out what the project resources path should be (src/main or src/test)
+        def resourcePath = "src${File.separatorChar}${env.contains ("test") ? "test" : "main"}${File.separatorChar}resources${File.separatorChar}"
 
+        //get lst of *.properties and any yaml files and process those
         File resourceDirectory = new File ("${System.getProperty("user.dir")}$File.separatorChar$resourcePath")
         FilenameFilter filter = {file, name -> name.matches(~/^.*properties$/) }
         List propsFiles = resourceDirectory.listFiles (filter)
@@ -33,26 +33,40 @@ class ConfigurationFactory {
         filter = {file, name -> name.matches(~/^.*yaml$/) }
         List yamlFiles = resourceDirectory.listFiles (filter)
 
+        Map propsMap = [:]
         propsFiles.each {file ->
             Properties prop = new Properties()
             prop.load(new FileInputStream (file) )
-            Map propsMap = [:]
             for (key in prop.stringPropertyNames()) {
                 propsMap.put(key, prop.getProperty(key))
             }
-            config.putAll(propsMap)
         }
 
+        def yamlConfig
         yamlFiles.each {file ->
-            def yamlConfig = new YamlSlurper().parseText(file.text)
-            config.putAll(yamlConfig)
+            yamlConfig = new YamlSlurper().parseText(file.text)
         }
 
-        if (envMap) //if env declared as system property update as default
-            config.putAll(envMap)
-        else
-            envMap.get ('env', "development")  //if env not set - use development as default
+        //use config slurper with default env setting - updates any defaults from matched environment
+        ConfigObject appConfig = new ConfigSlurper("$env").parse(new File("${resourcePath}ApplicationConfig.groovy").text )
 
-        config
+        ConfigObject finalConfig = new ConfigObject()
+
+        //build final config starting with lowest hierarchy sources
+        // 1. properties file first
+        // 2. overlayed by yaml files
+        // 3. overlayed by applicationConfig.groovy entries
+
+        finalConfig.putAll (propsMap)
+        finalConfig.putAll (yamlConfig)
+        finalConfig.merge(appConfig)
+        if (!finalConfig.get("env"))
+            finalConfig.putAll(envMap)  //if env not defined yet, add initial env from envMap
+
+        finalConfig.put('systemProperties', sysProps)
+        finalConfig.put('projectPath', System.getProperty("user.dir"))
+        finalConfig.put('resourcesPath', resourcePath.toString())
+
+        finalConfig
     }
 }

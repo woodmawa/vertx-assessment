@@ -21,9 +21,7 @@ class Application {
 
         ApplicationContext context = ApplicationContext.run()
 
-        Environment env
-
-        env = context.getEnvironment()
+        Environment env = context.getEnvironment()
 
         ConfigObject appConfig = context.run().getBean(ConfigObject)
         Future actorVertx  = context.run().getBean(Future, Qualifiers.byName('vertx'))
