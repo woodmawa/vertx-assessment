@@ -7,9 +7,16 @@ import io.micronaut.context.condition.ConditionContext
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.core.annotation.AnnotationMetadataProvider
 
+import javax.inject.Inject
+import javax.inject.Named
+
 class LocalStartupCondition implements Condition{
 
     private ConfigObject appConfig
+
+    @Inject @Named ('config') void setAppConfig (ConfigObject config) {
+        appConfig = config
+    }
 
     private AnnotationMetadata annotationMetadata
 

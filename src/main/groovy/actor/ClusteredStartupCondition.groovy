@@ -10,11 +10,16 @@ import io.micronaut.core.annotation.AnnotationMetadataProvider
 import io.vertx.core.Future
 
 import javax.inject.Inject
+import javax.inject.Named
 
 
 class ClusteredStartupCondition implements Condition{
 
     private ConfigObject appConfig
+
+    @Inject @Named ('config') void setAppConfig (ConfigObject config) {
+        appConfig = config
+    }
 
     private AnnotationMetadata annotationMetadata
 
