@@ -2,6 +2,7 @@ package actor
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanContext
+import io.micronaut.context.annotation.Requires
 import io.micronaut.context.condition.Condition
 import io.micronaut.context.condition.ConditionContext
 import io.micronaut.core.annotation.AnnotationMetadata
@@ -10,11 +11,13 @@ import io.micronaut.core.annotation.AnnotationMetadataProvider
 import javax.inject.Inject
 import javax.inject.Named
 
+@Requires (beans = [ConfigObject])
 class LocalStartupCondition implements Condition{
 
     private ConfigObject appConfig
 
-    @Inject @Named ('config') void setAppConfig (ConfigObject config) {
+    @Inject  void setAppConfig (@Named ('config') ConfigObject config) {
+        println "localStartupinjected $config"
         appConfig = config
     }
 
@@ -25,7 +28,6 @@ class LocalStartupCondition implements Condition{
     }
 
     public LocalStartupCondition() {
-
     }
 
     @Override

@@ -2,6 +2,7 @@ package actor
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanContext
+import io.micronaut.context.annotation.Requires
 import io.micronaut.context.condition.Condition
 import io.micronaut.context.condition.ConditionContext
 import io.micronaut.context.env.Environment
@@ -12,12 +13,13 @@ import io.vertx.core.Future
 import javax.inject.Inject
 import javax.inject.Named
 
-
+@Requires (beans = [ConfigObject])
 class ClusteredStartupCondition implements Condition{
 
     private ConfigObject appConfig
 
-    @Inject @Named ('config') void setAppConfig (ConfigObject config) {
+    @Inject  void setAppConfig (@Named ('config') ConfigObject config) {
+        println "clusteredStartup injected $config"
         appConfig = config
     }
 
