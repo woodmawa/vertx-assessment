@@ -41,7 +41,7 @@ class Application {
                 TestActorDI testActor = new TestActorDI()
                 def actorBean = testActor.tryBeanLookup()
                 assert actorBean
-                assert testActor.actor  // injection should work
+                assert testActor.actor  // injection should work - but fails get NPE
 
                 println "app stopping"
                 Actors.shutdown()
