@@ -35,8 +35,8 @@ class Application {
 
                 Actor actorByLookup = context.run().getBean(Actor)
                 assert actorByLookup
-                TestActorDI testActor = new TestActorDI()
-                def actorBean = testActor.tryBeanLookup()
+                TestActorDI testActor = new TestActorDI()       //create class that has @inject in it
+                def actorBean = testActor.tryBeanLookup()  //get bean by direct lookup - works
                 assert actorBean
                 assert testActor.actor  // injection should work - but fails get NPE
 
