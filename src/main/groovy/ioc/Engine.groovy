@@ -61,8 +61,8 @@ class CrankShaft {
     }
 }
 
-//see engineFactory
-//@Singleton
+//see engineFactory where this is created as a Bean
+//using Constructor injection for crankShaft bean
 class V2Engine implements Engine {
     int cylinders = 4
     CrankShaft shaft
@@ -103,7 +103,7 @@ class Vehicle {
         println "start: " + engine.start()
         println "start: " + smallerEngine.start()
         println "start: " + v4Engine.start()
-        //println "start: " + v2Engine.start()
+        println "start: " + v2Engine.start()
         "Vehicle all OK"
     }
 }

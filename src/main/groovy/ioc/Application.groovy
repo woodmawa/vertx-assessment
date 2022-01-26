@@ -39,6 +39,8 @@ class Application {
                 Actor actorByLookup = context.run().getBean(Actor)
                 assert actorByLookup
                 TestActorDI testActor = new TestActorDI()
+                def actorBean = testActor.tryBeanLookup()
+                assert actorBean
                 assert testActor.actor  // injection should work
 
                 println "app stopping"
