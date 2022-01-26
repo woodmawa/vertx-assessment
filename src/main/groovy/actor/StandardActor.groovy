@@ -1,6 +1,7 @@
 package actor
 
 import groovy.util.logging.Slf4j
+import io.micronaut.context.annotation.Prototype
 import io.vertx.core.AbstractVerticle
 import io.vertx.core.AsyncResult
 import io.vertx.core.Context
@@ -24,6 +25,7 @@ import java.util.function.Supplier
 import java.util.stream.Stream
 
 @Slf4j
+@Prototype
 class StandardActor extends AbstractVerticle implements Actor {
 
     private Optional<String> name = Optional.of ("Un-Named")
