@@ -6,7 +6,7 @@ import io.micronaut.context.ApplicationContext
 import javax.inject.Inject
 
 class TestActorDI {
-    @Inject Actor actor //should inject a prototype unnamed actor - fails with NPE when used 
+    @Inject Actor actor //should inject a prototype unnamed actor - fails with NPE when used
 
     ApplicationContext context = ApplicationContext.run()
 

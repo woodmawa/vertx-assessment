@@ -140,6 +140,7 @@ class Actors {
     }
 
     @Bean
+    @Prototype
     Actor actorGenerator () {
         StandardActor actor = new StandardActor ()
         Verticle v = actor as Verticle
