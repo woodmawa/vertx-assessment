@@ -1,7 +1,9 @@
 package actor
 
+import groovy.util.logging.Slf4j
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanContext
+import io.micronaut.context.annotation.Prototype
 import io.micronaut.context.annotation.Requires
 import io.micronaut.context.condition.Condition
 import io.micronaut.context.condition.ConditionContext
@@ -12,22 +14,25 @@ import javax.inject.Inject
 import javax.inject.Named
 
 @Requires (beans = [ConfigObject])
+@Prototype
+@Slf4j
 class LocalStartupCondition implements Condition{
 
     private ConfigObject appConfig
 
     @Inject  void setAppConfig (@Named ('appConfig') ConfigObject config) {
-        println "localStartupinjected $config"
+        log.debug "localStartupinjected condition injected with  $config"
         appConfig = config
     }
 
-    private AnnotationMetadata annotationMetadata
+    AnnotationMetadata annotationMetadata
 
-    public LocalStartupCondition(AnnotationMetadata annotationMetadata) {
+    LocalStartupCondition(AnnotationMetadata annotationMetadata) {
         this.annotationMetadata = annotationMetadata
     }
 
-    public LocalStartupCondition() {
+    LocalStartupCondition() {
+        log.debug "localStartup conditional bean constructor called"
     }
 
     @Override

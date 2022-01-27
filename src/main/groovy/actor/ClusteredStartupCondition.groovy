@@ -1,7 +1,9 @@
 package actor
 
+import groovy.util.logging.Slf4j
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanContext
+import io.micronaut.context.annotation.Prototype
 import io.micronaut.context.annotation.Requires
 import io.micronaut.context.condition.Condition
 import io.micronaut.context.condition.ConditionContext
@@ -14,23 +16,25 @@ import javax.inject.Inject
 import javax.inject.Named
 
 @Requires (beans = [ConfigObject])
+@Prototype
+@Slf4j
 class ClusteredStartupCondition implements Condition{
 
     private ConfigObject appConfig
 
     @Inject  void setAppConfig (@Named ('appConfig') ConfigObject config) {
-        println "clusteredStartup injected $config"
+        log.debug "clusteredStartup condition injected with  $config"
         appConfig = config
     }
 
     private AnnotationMetadata annotationMetadata
 
-    public ClusteredStartupCondition(AnnotationMetadata annotationMetadata) {
+    ClusteredStartupCondition(AnnotationMetadata annotationMetadata) {
         this.annotationMetadata = annotationMetadata
     }
 
-    public ClusteredStartupCondition() {
-
+    ClusteredStartupCondition() {
+        log.debug "clusteredStartup condition default constructor() called "
     }
 
     @Override
