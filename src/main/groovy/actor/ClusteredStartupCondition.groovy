@@ -31,14 +31,14 @@ class ClusteredStartupCondition implements Condition{
 
     private AnnotationMetadata annotationMetadata
 
-    /*
+
     ClusteredStartupCondition(AnnotationMetadata annotationMetadata) {
         this.annotationMetadata = annotationMetadata
     }
 
     ClusteredStartupCondition() {
         log.debug "clusteredStartup condition default constructor() called "
-    }*/
+    }
 
     @Override
     public boolean matches(ConditionContext context) {
