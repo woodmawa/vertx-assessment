@@ -14,9 +14,11 @@ import io.vertx.core.Future
 
 import javax.inject.Inject
 import javax.inject.Named
+import javax.inject.Singleton
 
 @Requires (beans = [ConfigObject])
-@Prototype
+//@Prototype
+@Singleton
 @Slf4j
 class ClusteredStartupCondition implements Condition{
 
@@ -29,13 +31,14 @@ class ClusteredStartupCondition implements Condition{
 
     private AnnotationMetadata annotationMetadata
 
+    /*
     ClusteredStartupCondition(AnnotationMetadata annotationMetadata) {
         this.annotationMetadata = annotationMetadata
     }
 
     ClusteredStartupCondition() {
         log.debug "clusteredStartup condition default constructor() called "
-    }
+    }*/
 
     @Override
     public boolean matches(ConditionContext context) {
