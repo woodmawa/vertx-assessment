@@ -30,7 +30,7 @@ String MicronautVersion  = "3.3.0"
 dependencies {
 
     //implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.6'
-    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.3.0-alpha10'
+    implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.3.0-alpha13'
     //implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.32'
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.0-alpha5'
 
