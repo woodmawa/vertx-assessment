@@ -19,12 +19,12 @@ repositories {
 }
 
 
-String vertxVersion = "4.2.3"
+String vertxVersion = "4.2.4"
 String junitJupiterVersion = "5.8.2"
 String hazelCastVersion = "5.0.2"
 String groovyVersion = "3.0.9"
 String spockVersion = "2.0-groovy-3.0"
-String MicronautVersion  = "3.2.6"
+String MicronautVersion  = "3.3.0"
 
 
 dependencies {
