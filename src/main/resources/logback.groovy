@@ -1,15 +1,6 @@
-import ch.qos.logback.classic.LoggerContext
-import ch.qos.logback.core.ConsoleAppender
-import ch.qos.logback.core.*
-import ch.qos.logback.core.encoder.*
-import ch.qos.logback.core.read.*
-import ch.qos.logback.core.rolling.*
-import ch.qos.logback.core.status.*
-import ch.qos.logback.classic.net.*
+
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder
-import org.fusesource.jansi.internal.WindowsSupport
 import org.fusesource.jansi.internal.Kernel32
-import org.slf4j.LoggerFactory
 
 import static ch.qos.logback.classic.Level.*
 import static org.fusesource.jansi.Ansi.Color.*
@@ -17,7 +8,12 @@ import static org.fusesource.jansi.Ansi.Color.*
 import static org.fusesource.jansi.internal.Kernel32.GetStdHandle
 import static org.fusesource.jansi.internal.Kernel32.STD_OUTPUT_HANDLE
 
-def appenderList = []
+
+/**
+ * config appears to be ignored in intellij when running a script
+ */
+
+def appenderList = ["PlainConsole"]
 
 conversionRule("highlight", util.loggingConfiguration.HighlightingCompositeConverter)
 
@@ -40,12 +36,13 @@ appender("AnsiConsole", ConsoleAppender) {
 appender("PlainConsole", ConsoleAppender) {
     encoder(PatternLayoutEncoder) {
         //logger{5} will shorten just to class name to x.y.z.ClassName form
-        pattern = "[%d{HH:mm:ss.SSS}] [%thread] [%level] %logger{5} : %msg%n"
+        pattern = "[%d{HH:mm:ss.SSS}] [%thread] [%level] %logger{0} : %msg%n"
     }
 }
 
 logger ("io.vertx.core", WARN)
 logger ("io.netty", WARN)
+logger ("io.netty.channel", WARN)
 logger ("ch.qos.logback.classic", WARN)
 logger ("com.hazelcast", WARN)
 
@@ -54,4 +51,4 @@ logger "datastore", DEBUG
 
 
 
-root(DEBUG, ["AnsiConsole"])
+root(DEBUG, ["PlainConsole"])

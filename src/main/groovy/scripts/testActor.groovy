@@ -14,7 +14,7 @@ cstart.onComplete(ar -> {
     }
 })*/
 
-Actors.localInit()
+//Actors.localInit()
 
 
 println "waited 5 seconds to start cluster"
