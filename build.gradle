@@ -26,6 +26,7 @@ String groovyVersion = "3.0.9"
 String groovyMavenCoordinate = ""
 String spockVersion = "2.0-groovy-3.0"
 String MicronautVersion  = "3.3.0"
+String MicronautTestVersion  = "3.0.5"
 String jansiVersion = "2.4.0"
 
 dependencies {
@@ -61,7 +62,7 @@ dependencies {
 
     compileOnly(platform("io.micronaut:micronaut-bom:$MicronautVersion")) // D3
     compileOnly("io.micronaut:micronaut-inject") // D4
-    compileOnly group: 'io.micronaut', name: 'micronaut-inject-groovy', version: MicronautVersion
+    compileOnly group: 'io.micronaut', name: 'micronaut-inject-groovy', version: "$MicronautVersion"
 
 
     testImplementation group: "org.codehaus.groovy", name: 'groovy', version:"${groovyVersion}"
@@ -71,8 +72,11 @@ dependencies {
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: "$junitJupiterVersion"
     testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: "$junitJupiterVersion"
 
-    testImplementation platform("io.micronaut:micronaut-bom:$MicronautVersion")
-    testImplementation "io.micronaut.test:micronaut-test-junit5"
+    //testImplementation platform("io.micronaut:micronaut-test-bom:$MicronautTestVersion")
+    testImplementation "io.micronaut.test:micronaut-test-spock:1.1.5:"
+    testCompileOnly group: 'io.micronaut', name: 'micronaut-inject-groovy',  version:  "$MicronautVersion"
+
+    //testImplementation "io.micronaut.test:micronaut-test-junit5:$MicronautVersion"
 
     testImplementation 'org.spockframework:spock-core:${spockVersion}'
  }

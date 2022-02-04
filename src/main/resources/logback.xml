@@ -1,7 +1,6 @@
 <!-- had to add as intellij - ignored logback.groovy -->
 
 <configuration>
-    ❶
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>[%d{HH:mm:ss.SSS}] %level [%thread] %logger{5} - %msg%n</pattern>
