@@ -1,6 +1,7 @@
 package vertxfactory
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.core.type.Argument
 import io.micronaut.inject.qualifiers.Qualifiers
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.vertx.core.Future
@@ -36,12 +37,7 @@ class VertxFactoryTest extends Specification {
         }
     }
 
-    def "empty"  () {
-        expect:
-        true
-    }
-
-    def "standalone vertx creation " () {
+    def "standalone vertx creation, async.await version  " () {
         given: "a new vertx"
             def vertx = Vertx.vertx()
             def var
@@ -56,7 +52,7 @@ class VertxFactoryTest extends Specification {
         async.await(2.0)
     }
 
-    def "standalone vertx creation version2 " () {
+    def "standalone vertx creation using pollingConditions version2 " () {
 
         def conditions = new PollingConditions(timeout: 10)
 
@@ -72,7 +68,8 @@ class VertxFactoryTest extends Specification {
         async.evaluate {println "hello Will" }  //void return - thought this might fail test - it doesnt
 
         Future isClosed = vertx.close()
-        then : "expect the result to be completed in specified time "
+
+        //can put this in the then block - but these methods are void return so maybe best in then and wait
         conditions.within(2) {
             assert var == "set"
         }
@@ -80,9 +77,12 @@ class VertxFactoryTest extends Specification {
         conditions.eventually {
             assert isClosed.isComplete()
         }
+
+        then : "expect the result to be completed in specified time "
+        noExceptionThrown()
     }
 
-    def "standalone vertx creation version 3 " () {
+    def "standalone vertx creation, using blockingVariables  version 3 " () {
 
         BlockingVariables vars = new BlockingVariables(3.0)  //behaves like a blocking map, in this case with timeout
 
@@ -107,6 +107,7 @@ class VertxFactoryTest extends Specification {
         when:
         //vertxFromFactory = context.get(Future<Vertx>, Qualifiers.byName("Vertx"))
         Future<Vertx> futVertx  = context.getBean (Future<Vertx>,Qualifiers.byName("Vertx"))
+        def list = context.getBeansOfType(Future<Vertx>)
         if (futVertx.succeeded())
             vertxFromFactory = futVertx.result()
 

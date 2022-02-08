@@ -68,6 +68,8 @@ class VertxFactory {
     @Named ('Vertx')
     @Requires(condition = LocalStartupCondition)
     Future<Vertx> localInit () {
+        VertxOptions clusterOptions = new VertxOptions()
+
         Promise startPromise = Promise.promise()
 
         vertx = Vertx.vertx()
