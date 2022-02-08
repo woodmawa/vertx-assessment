@@ -3,18 +3,23 @@ package vertxfactory
 import actor.ClusteredStartupCondition
 import actor.LocalStartupCondition
 import groovy.util.logging.Slf4j
+import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Bean
 import io.micronaut.context.annotation.Factory
 import io.micronaut.context.annotation.Requires
+import io.micronaut.inject.qualifiers.Qualifiers
 import io.vertx.core.Future
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
+import jakarta.inject.Inject
 import jakarta.inject.Named
 
 @Factory
 @Slf4j
 class VertxFactory {
+
+    @Inject ApplicationContext context
 
     static Vertx vertx
 
@@ -24,21 +29,30 @@ class VertxFactory {
      * incase in clustered mode we have to check if the future succeeded or not
      * if not complete yet - just return the pending future
      */
-    /*@Bean
-    Future createVertx() {
+    //@Bean
+    Optional<Vertx> vertx() {
+
+        //force lookup to generate the bean
+        //Future<Vertx> fv = context.getBean (Future<Vertx>,Qualifiers.byName("Vertx"))
+
+        //fv
         if (futureServer == null && !vertx) {
             throw new ExceptionInInitializerError("Actors context has not been initialised, use localInit() or clusteredInit() first  ")
         } else if (futureServer.isComplete()){
             if (futureServer.succeeded()) {
                 //ok to return the vertx
-                return vertx
-            } else {
+                return Optional.of (vertx)
+            } else (futureServer.failed()) {
                 //if failed return the cause
-                return futureServer.cause()
+                log.error ("clustered vertx failed to start successfully, ${futureServer.cause().message} ")
+                return Optional.empty()
             }
-        } else
-            futureServer
-    }*/
+        } else {
+            Future fut = futureServer.onComplete { ar -> Optional.of(ar.result()) }
+                    .onFailure { println "failed ${it.cause().message}" }
+            Optional.ofNullable(fut.otherwise(void))
+        }
+    }
 
     //micronaught expects instance methods when using the StartupCondition as shown
     @Bean

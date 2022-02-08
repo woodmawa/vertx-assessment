@@ -17,12 +17,14 @@ import spock.util.concurrent.PollingConditions
 @MicronautTest
 class VertxFactoryTest extends Specification {
 
-    @Inject ApplicationContext context
+    @Inject @Shared ApplicationContext context
 
     @Shared
     Vertx vertxFromFactory
 
     def setupSpec () {
+
+        ApplicationContext ctx = context
         println "setup conditions for all tests"
     }
 
@@ -118,4 +120,15 @@ class VertxFactoryTest extends Specification {
         futVertx.succeeded()
         vertxFromFactory.isClustered() == false
     }
+
+    def "get vertx from factory "() {
+
+
+        when:
+        Optional<Vertx> opt = VertxFactory::new().vertx()
+
+        then:
+        opt.isPresent()
+    }
+
 }
