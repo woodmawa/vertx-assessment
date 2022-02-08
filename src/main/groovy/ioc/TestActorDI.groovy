@@ -3,7 +3,7 @@ package ioc
 import actor.Actor
 import io.micronaut.context.ApplicationContext
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 /*not a bean it its own right - but see if you can ask the bean context for one
 * it has a bean dependency however

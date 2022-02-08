@@ -10,8 +10,8 @@ import io.micronaut.context.condition.ConditionContext
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.core.annotation.AnnotationMetadataProvider
 
-import javax.inject.Inject
-import javax.inject.Named
+import jakarta.inject.Inject
+import jakarta.inject.Named
 
 @Requires (beans = [ConfigObject])
 @Prototype

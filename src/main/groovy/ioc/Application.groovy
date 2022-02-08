@@ -7,7 +7,7 @@ import io.micronaut.context.env.Environment
 import io.micronaut.inject.qualifiers.Qualifiers
 import io.vertx.core.Future
 
-import javax.inject.Qualifier
+import jakarta.inject.Qualifier
 import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy
 

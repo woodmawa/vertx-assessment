@@ -12,9 +12,9 @@ import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.core.annotation.AnnotationMetadataProvider
 import io.vertx.core.Future
 
-import javax.inject.Inject
-import javax.inject.Named
-import javax.inject.Singleton
+import jakarta.inject.Inject
+import jakarta.inject.Named
+import jakarta.inject.Singleton
 
 @Requires (beans = [ConfigObject])
 //@Prototype

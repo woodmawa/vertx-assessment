@@ -5,7 +5,7 @@ import jakarta.inject.Inject
 import jakarta.inject.Named
 
 import javax.annotation.PostConstruct
-import javax.inject.*
+import jakarta.inject.*
 import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy
 
