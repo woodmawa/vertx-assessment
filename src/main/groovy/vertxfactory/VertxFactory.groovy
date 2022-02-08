@@ -44,7 +44,7 @@ class VertxFactory {
     @Bean
     @Named ('Vertx')
     @Requires(condition = ClusteredStartupCondition)
-    Future clusterInit () {
+    Future<Vertx> clusterInit () {
         VertxOptions clusterOptions = new VertxOptions()
 
         //todo read some options from the environment here
@@ -52,11 +52,11 @@ class VertxFactory {
         //this takes some time to start - dont block and wait for callback
         Vertx.clusteredVertx(clusterOptions, ar -> {
             if (ar.succeeded()) {
-                println  "clustered vertx started successfully "
-                vertx = ar.result()
+                 vertx = ar.result()
                 clusterStartPromise.complete(vertx)
+                log.info ("clustered vertx started successfully")
             } else {
-                println("couldn't start clustered vertx, reason : ${ar.cause().message}")
+                log.error("couldn't start clustered vertx, reason : ${ar.cause().message}")
                 clusterStartPromise.fail(new RuntimeException("clusteredVertx failed to start with ${ar.cause().message}"))
             }
         })
@@ -67,11 +67,13 @@ class VertxFactory {
     @Bean
     @Named ('Vertx')
     @Requires(condition = LocalStartupCondition)
-    Future localInit () {
+    Future<Vertx> localInit () {
         Promise startPromise = Promise.promise()
 
         vertx = Vertx.vertx()
         startPromise.complete(vertx)
+        log.info ("local vertx started successfully")
+
         futureServer = startPromise.future()
     }
 

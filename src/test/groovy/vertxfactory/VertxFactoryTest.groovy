@@ -1,13 +1,40 @@
 package vertxfactory
 
+import io.micronaut.context.ApplicationContext
+import io.micronaut.inject.qualifiers.Qualifiers
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.vertx.core.Future
 import io.vertx.core.Vertx
+import jakarta.inject.Inject
+import jakarta.inject.Qualifier
+import spock.lang.Shared
 import spock.lang.Specification
 import spock.util.concurrent.AsyncConditions
 import spock.util.concurrent.BlockingVariables
 import spock.util.concurrent.PollingConditions
 
+@MicronautTest
 class VertxFactoryTest extends Specification {
+
+    @Inject ApplicationContext context
+
+    @Shared
+    Vertx vertxFromFactory
+
+    def setupSpec () {
+        println "setup conditions for all tests"
+    }
+
+    def cleanupSpec () {
+        println "cleanup after all tests "
+        vertxFromFactory?.close {ar ->
+            if (ar.failed()) {
+                println "failed to close factory vertx " + ar.cause().message
+            } else {
+                println "successfully closed vertx "
+            }
+        }
+    }
 
     def "empty"  () {
         expect:
@@ -57,7 +84,7 @@ class VertxFactoryTest extends Specification {
 
     def "standalone vertx creation version 3 " () {
 
-        BlockingVariables vars = new BlockingVariables(3.0)  //behaves like a blocking map, in this case with timeout 
+        BlockingVariables vars = new BlockingVariables(3.0)  //behaves like a blocking map, in this case with timeout
 
 
         given: "a new vertx"
@@ -73,5 +100,21 @@ class VertxFactoryTest extends Specification {
 
         then : "expect the result to be completed in specified time "
         vars.result == "set"  //will block until get completes
+    }
+
+    def "create vertx from factory "() {
+
+        when:
+        //vertxFromFactory = context.get(Future<Vertx>, Qualifiers.byName("Vertx"))
+        Future<Vertx> futVertx  = context.getBean (Future<Vertx>,Qualifiers.byName("Vertx"))
+        if (futVertx.succeeded())
+            vertxFromFactory = futVertx.result()
+
+        then: "should see Vertx in DI context "
+        context != null
+        context.containsBean(Future<Vertx>)
+
+        futVertx.succeeded()
+        vertxFromFactory.isClustered() == false
     }
 }
