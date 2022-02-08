@@ -125,7 +125,7 @@ class VertxFactoryTest extends Specification {
 
 
         when:
-        Optional<Vertx> opt = VertxFactory::new().vertx()
+        Optional<Vertx> opt = VertxFactory::vertx(context)
 
         then:
         opt.isPresent()

@@ -30,12 +30,13 @@ class VertxFactory {
      * if not complete yet - just return the pending future
      */
     //@Bean
-    Optional<Vertx> vertx() {
+    static Optional<Vertx> vertx(ApplicationContext ctx) {
 
         //force lookup to generate the bean
-        //Future<Vertx> fv = context.getBean (Future<Vertx>,Qualifiers.byName("Vertx"))
+        Future<Vertx> fv = ctx.getBean (Future<Vertx>,Qualifiers.byName("Vertx"))
 
-        //fv
+        fv
+
         if (futureServer == null && !vertx) {
             throw new ExceptionInInitializerError("Actors context has not been initialised, use localInit() or clusteredInit() first  ")
         } else if (futureServer.isComplete()){
