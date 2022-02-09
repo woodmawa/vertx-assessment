@@ -21,6 +21,7 @@ import jakarta.inject.Singleton
 class VertxFactory {
 
     @Inject ApplicationContext context
+    @Inject ConfigObject appConfig
 
     static Vertx vertx
 
@@ -59,7 +60,6 @@ class VertxFactory {
 
     //micronaught expects instance methods when using the StartupCondition as shown
     @Bean
-    //@Context
     @Singleton
     @Named ('Vertx')
     @Requires(condition = ClusteredStartupCondition)
@@ -70,7 +70,8 @@ class VertxFactory {
             return futureServer
         }
 
-        VertxOptions clusterOptions = new VertxOptions()
+        Map voptions = appConfig?.framework.vertxOptions ?: [:]
+        VertxOptions clusterOptions = new VertxOptions(voptions)
 
         //todo read some options from the environment here
         Promise clusterStartPromise = Promise.promise()
@@ -90,7 +91,6 @@ class VertxFactory {
     }
 
     @Bean
-    //@Context
     @Singleton
     @Named ('Vertx')
     @Requires(condition = LocalStartupCondition)
@@ -101,7 +101,8 @@ class VertxFactory {
             return futureServer
         }
 
-        VertxOptions clusterOptions = new VertxOptions()
+        Map voptions = appConfig?.framework.vertxOptions ?: [:]
+        VertxOptions clusterOptions = new VertxOptions(voptions)
 
         Promise startPromise = Promise.promise()
 
