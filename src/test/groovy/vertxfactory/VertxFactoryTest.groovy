@@ -25,16 +25,17 @@ class VertxFactoryTest extends Specification {
     def setupSpec () {
 
         ApplicationContext ctx = context
-        println "setup conditions for all tests"
+        assert ctx, "ApplicationContext context DI didnt work "  //check DI fired
+        println "setupSpec:setup conditions for all tests"
     }
 
     def cleanupSpec () {
         println "cleanup after all tests "
         vertxFromFactory?.close {ar ->
             if (ar.failed()) {
-                println "failed to close factory vertx " + ar.cause().message
+                println "cleanupSpec:failed to close factory vertx " + ar.cause().message
             } else {
-                println "successfully closed vertx "
+                println "cleanupSpec:successfully closed vertx "
             }
         }
     }

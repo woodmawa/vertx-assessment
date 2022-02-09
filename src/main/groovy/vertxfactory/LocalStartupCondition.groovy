@@ -1,4 +1,4 @@
-package actor
+package vertxfactory
 
 import groovy.util.logging.Slf4j
 import io.micronaut.context.ApplicationContext
@@ -13,15 +13,15 @@ import io.micronaut.core.annotation.AnnotationMetadataProvider
 import jakarta.inject.Inject
 import jakarta.inject.Named
 
-@Requires (beans = [ConfigObject])
-@Prototype
+//@Requires (beans = [ConfigObject])
+//@Prototype
 @Slf4j
 class LocalStartupCondition implements Condition{
 
     private ConfigObject appConfig
 
     @Inject  void setAppConfig (@Named ('appConfig') ConfigObject config) {
-        log.debug "localStartupinjected condition injected with  $config"
+        log.debug "localStartup : condition injected with appConfig  $config"
         appConfig = config
     }
 
@@ -32,7 +32,7 @@ class LocalStartupCondition implements Condition{
     }
 
     LocalStartupCondition() {
-        log.debug "localStartup conditional bean constructor called"
+        log.debug "localStartupCondition - default constructor called"
     }
 
     @Override
@@ -47,8 +47,10 @@ class LocalStartupCondition implements Condition{
 
             String startupMode = appConfig.framework.serverMode
             if (startupMode) {
-                if (startupMode == 'local')
+                if (startupMode == 'local') {
+                    log.debug "localStartup matches with startup mode 'local', return true  "
                     return true
+                }
                 else
                     return false
             }

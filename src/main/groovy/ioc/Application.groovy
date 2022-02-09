@@ -5,8 +5,10 @@ import actor.Actors
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.env.Environment
 import io.micronaut.inject.qualifiers.Qualifiers
+import io.micronaut.runtime.Micronaut
+import io.vertx.core.AsyncResult
 import io.vertx.core.Future
-
+import io.vertx.core.Vertx
 import jakarta.inject.Qualifier
 import java.lang.annotation.Retention
 import java.lang.annotation.RetentionPolicy
@@ -16,24 +18,27 @@ class Application {
 
     static main (args) {
 
-
+        println "running main app "
         ApplicationContext context = ApplicationContext.run()
+        //ApplicationContext context =  Micronaut.run (Application)  //starts local web server
 
+        assert context
         Environment env = context.getEnvironment()
 
-        ConfigObject appConfig = context.run().getBean(ConfigObject)
-        Future actorVertx  = context.run().getBean(Future, Qualifiers.byName('Actors-Vertx'))
+        ConfigObject appConfig = context.getBean(ConfigObject)
+        assert appConfig
 
-        Vehicle v = context.run().getBean(Vehicle)
+        Future<Vertx> futVertx = context.getBean(Future<Vertx>, Qualifiers.byName("Vertx"))
 
-        println v.start()
-
-        actorVertx.onComplete{ar ->
+        Vertx vertx
+        futVertx.onComplete { AsyncResult ar ->
             if (ar.succeeded()) {
-                def vertx = ar.result()
-                println "future, ${appConfig.framework.serverMode} vertx started, with $vertx"
+                vertx = ar.result()
 
-                Actor actorByLookup = context.run().getBean(Actor)
+                println "[${appConfig.framework.serverMode}] vertx started, with $vertx"
+
+                Actor actorByLookup = context.getBean(Actor)
+                actorByLookup.setName("william")
                 assert actorByLookup
 
                 TestActorDI testActor = new TestActorDI()       //create class that has @inject in it
@@ -42,17 +47,16 @@ class Application {
 
                 //although TestActorDI is not a bean itself, it has a bean dependency - try and request getting a  TestActorDI
                 //from context and see what happens
-                TestActorDI testActorByLookup = context.run().getBean(TestActorDI)
+                TestActorDI testActorByLookup = context.getBean(TestActorDI)
                 assert testActorByLookup.actor  // injection now  works!
 
                 println "app stopping"
                 Actors.shutdown()
 
             } else {
-                println "clustered vertx failed ${ar.cause()}"
+                ar.cause().printStackTrace()
             }
         }
-
-        v
     }
+
 }

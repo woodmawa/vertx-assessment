@@ -28,7 +28,7 @@ import java.util.stream.Stream
 @Prototype
 class StandardActor extends AbstractVerticle implements Actor {
 
-    private Optional<String> name = Optional.of ("Un-Named")
+    private Optional<String> name = Optional.of ("${getClass().simpleName}@${Integer.toHexString(System.identityHashCode(this)) }")
     //private address = "actor.${->getName()}".toString()
     String deploymentId = ""
 
@@ -155,8 +155,8 @@ class StandardActor extends AbstractVerticle implements Actor {
         Vertx vertx = Actors.vertx()
 
         // deploy action then invokes start(Promise) method asynchronously which registers the default listener
-        Future future = vertx.deployVerticle(this )
-        future.onComplete({ar ->
+        Future futureVerticle = vertx.deployVerticle(this )
+        futureVerticle.onComplete({ar ->
             if (ar.succeeded()) {
                 this.deploymentId = ar.result()
                 Actors.deployedActors.put(ar.result(), this)
@@ -202,7 +202,7 @@ class StandardActor extends AbstractVerticle implements Actor {
     }
 
     void stop (Promise<Void> promise) {
-        log.debug "stop: # of consumers is currently ${consumers.size()},  unregister all the listeners "
+        log.debug "stop: # of consumers registered on address [$address] is currently ${consumers.size()},  unregister all the listeners "
 
         consumers.each {it.unregister()}
         consumers.clear()

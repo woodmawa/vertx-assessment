@@ -11,7 +11,10 @@ import io.vertx.core.Future
 
 import io.micronaut.context.annotation.Bean
 import io.micronaut.context.annotation.Factory
+import jakarta.inject.Inject
 import jakarta.inject.Named
+import vertxfactory.ClusteredStartupCondition
+import vertxfactory.LocalStartupCondition
 
 import java.util.concurrent.ConcurrentHashMap
 
@@ -23,11 +26,27 @@ class Actors {
 
     static Future futureServer
 
+    //constructor injection here
+    @Inject Actors (@Named("Vertx") Future<Vertx> future) {
+        if (!futureServer) {
+            futureServer = future
+            assert futureServer.isComplete()
+            futureServer.onComplete { ar ->
+                if (ar.succeeded()) {
+                    vertx = ar.result()
+                } else {
+                    ar.cause().printStackTrace()
+                }
+            }
+            log.debug "Actors constructor: first time initialisation, injected future $future and set vertx as $vertx"
+        }
+    }
+
     /*
      * incase in clustered mode we have to check if the future succeeded or not
      * if not complete yet - just return the pending future
      */
-    static vertx() {
+    /*static vertx() {
         if (futureServer == null && !vertx) {
             throw new ExceptionInInitializerError("Actors context has not been initialised, use localInit() or clusteredInit() first  ")
         } else if (futureServer.isComplete()){
@@ -40,42 +59,7 @@ class Actors {
             }
         } else
             futureServer
-     }
-
-    //micronaught expects instance methods when using the StartupCondition as shown
-    @Bean
-    @Named ('Actors-Vertx')
-    @Requires(condition = ClusteredStartupCondition)
-    Future clusterInit () {
-        VertxOptions clusterOptions = new VertxOptions()
-
-        //todo read some options from the environment here
-        Promise clusterStartPromise = Promise.promise()
-        //this takes some time to start - dont block and wait for callback
-        Vertx.clusteredVertx(clusterOptions, ar -> {
-            if (ar.succeeded()) {
-                println  "clustered vertx started successfully "
-                vertx = ar.result()
-                clusterStartPromise.complete(vertx)
-            } else {
-                println("couldn't start clustered vertx, reason : ${ar.cause().message}")
-                clusterStartPromise.fail(new RuntimeException("clusteredVertx failed to start with ${ar.cause().message}"))
-            }
-        })
-
-        futureServer = clusterStartPromise.future()
-    }
-
-    @Bean
-    @Named ('Actors-Vertx')
-    @Requires(condition = LocalStartupCondition)
-    Future localInit () {
-        Promise startPromise = Promise.promise()
-
-        vertx = Vertx.vertx()
-        startPromise.complete(vertx)
-        futureServer = startPromise.future()
-    }
+     }*/
 
 
     static HashMap deployedActors = new ConcurrentHashMap<>()
@@ -140,13 +124,28 @@ class Actors {
     }
 
     @Bean
+    @Named ("Actor")
     @Prototype
-    Actor actorGenerator () {
+    Actor actorGenerator (@Named("Vertx") Future<Vertx> future) {
+
+        if (!futureServer) {
+            futureServer = future
+            assert futureServer.isComplete()
+            futureServer.onComplete { ar ->
+                if (ar.succeeded()) {
+                    vertx = ar.result()
+                } else {
+                    ar.cause().printStackTrace()
+                }
+            }
+            println "actorGenerator found uninitialsed vertx state, attempted fix : injected future $future and set vertx as $vertx"
+        }
+
         StandardActor actor = new StandardActor ()
         Verticle v = actor as Verticle
 
         //deploy this specific verticle instance
-        vertx().deployVerticle(v, {ar ->
+        vertx.deployVerticle(v, {ar ->
             if (ar.succeeded()) {
                 actor.deploymentId = ar.result()
                 deployedActors.put(ar.result(), actor)
@@ -164,7 +163,7 @@ class Actors {
 
     static shutdown () {
         log.debug ">>Actors.shutdown(): ${deployedActors.size()} to be shutdown "
-        vertx().close(ar -> {
+        vertx.close(ar -> {
             if (ar.succeeded()) {
                 log.debug ">>Actors.shutdown(): close handler: actor network closed successfully "
                 deployedActors.clear()
@@ -172,5 +171,8 @@ class Actors {
                 log.debug ">>Actors.shutdown(): close handler:couldnt close actor network,  reason ${ar.cause().message}"
             }
         })
+
+        futureServer = null
+        vertx = null
     }
 }

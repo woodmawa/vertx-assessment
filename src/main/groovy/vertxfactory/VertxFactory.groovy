@@ -1,10 +1,10 @@
 package vertxfactory
 
-import actor.ClusteredStartupCondition
-import actor.LocalStartupCondition
+
 import groovy.util.logging.Slf4j
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Bean
+import io.micronaut.context.annotation.Context
 import io.micronaut.context.annotation.Factory
 import io.micronaut.context.annotation.Requires
 import io.micronaut.inject.qualifiers.Qualifiers
@@ -14,6 +14,7 @@ import io.vertx.core.Vertx
 import io.vertx.core.VertxOptions
 import jakarta.inject.Inject
 import jakarta.inject.Named
+import jakarta.inject.Singleton
 
 @Factory
 @Slf4j
@@ -30,6 +31,7 @@ class VertxFactory {
      * if not complete yet - just return the pending future
      */
     //@Bean
+    //@Requires(beans=[Future<Vertx>])
     static Optional<Vertx> vertx(ApplicationContext ctx) {
 
         //force lookup to generate the bean
@@ -57,9 +59,17 @@ class VertxFactory {
 
     //micronaught expects instance methods when using the StartupCondition as shown
     @Bean
+    //@Context
+    @Singleton
     @Named ('Vertx')
     @Requires(condition = ClusteredStartupCondition)
     Future<Vertx> clusterInit () {
+
+        if (futureServer) {
+            log.info "clustered vertx already being started, returning its Future "
+            return futureServer
+        }
+
         VertxOptions clusterOptions = new VertxOptions()
 
         //todo read some options from the environment here
@@ -80,9 +90,17 @@ class VertxFactory {
     }
 
     @Bean
+    //@Context
+    @Singleton
     @Named ('Vertx')
     @Requires(condition = LocalStartupCondition)
     Future<Vertx> localInit () {
+
+        if (futureServer) {
+            log.info "local vertx already being started, returning its Future "
+            return futureServer
+        }
+
         VertxOptions clusterOptions = new VertxOptions()
 
         Promise startPromise = Promise.promise()

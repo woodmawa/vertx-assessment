@@ -16,7 +16,7 @@ class TestActorDI {
 
     //doing direct lookup generates the bean !
     def tryBeanLookup(){
-        def bean = context.run().getBean(Actor)
+        def bean = context.getBean(Actor)
         bean
     }
 }

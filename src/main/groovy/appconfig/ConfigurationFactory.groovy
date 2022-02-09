@@ -1,17 +1,24 @@
 package appconfig
 
+import groovy.util.logging.Slf4j
 import groovy.yaml.YamlSlurper
 import io.micronaut.context.annotation.Bean
+import io.micronaut.context.annotation.Context
 import io.micronaut.context.annotation.Factory
 import jakarta.inject.Named
+import jakarta.inject.Singleton
 
 @Factory
+@Slf4j
 class ConfigurationFactory {
 
     @Bean
+    @Singleton
+    //@Context
     @Named('appConfig')
     ConfigObject config () {
 
+        log.info "building the configObject for the app"
         Map envMap = [:]
         def sysProps = System.getenv()
         //see if env is defined in system properties first

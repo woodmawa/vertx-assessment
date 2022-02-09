@@ -1,4 +1,4 @@
-package actor
+package vertxfactory
 
 import groovy.util.logging.Slf4j
 import io.micronaut.context.ApplicationContext
@@ -16,16 +16,16 @@ import jakarta.inject.Inject
 import jakarta.inject.Named
 import jakarta.inject.Singleton
 
-@Requires (beans = [ConfigObject])
+//@Requires (beans = [ConfigObject])
 //@Prototype
-@Singleton
+//@Singleton
 @Slf4j
 class ClusteredStartupCondition implements Condition{
 
     private ConfigObject appConfig
 
     @Inject  void setAppConfig (@Named ('appConfig') ConfigObject config) {
-        log.debug "clusteredStartup condition injected with  $config"
+        log.debug "clusteredStartup : condition injected with appConfig  $config"
         appConfig = config
     }
 
@@ -37,7 +37,7 @@ class ClusteredStartupCondition implements Condition{
     }
 
     ClusteredStartupCondition() {
-        log.debug "clusteredStartup condition default constructor() called "
+        log.debug "clusteredStartupCondition - default constructor() called "
     }
 
     @Override
@@ -52,8 +52,10 @@ class ClusteredStartupCondition implements Condition{
 
             String startupMode = appConfig.framework.serverMode
             if (startupMode) {
-                if (startupMode == 'clustered')
+                if (startupMode == 'clustered') {
+                    log.debug "clusteredStartup matches with startup mode 'clustered', return true  "
                     return true
+                }
                 else
                     return false
             }
