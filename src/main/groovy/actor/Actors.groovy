@@ -42,26 +42,6 @@ class Actors {
         }
     }
 
-    /*
-     * incase in clustered mode we have to check if the future succeeded or not
-     * if not complete yet - just return the pending future
-     */
-    /*static vertx() {
-        if (futureServer == null && !vertx) {
-            throw new ExceptionInInitializerError("Actors context has not been initialised, use localInit() or clusteredInit() first  ")
-        } else if (futureServer.isComplete()){
-            if (futureServer.succeeded()) {
-                //ok to return the vertx
-                return vertx
-            } else {
-                //if failed return the cause
-                return futureServer.cause()
-            }
-        } else
-            futureServer
-     }*/
-
-
     static HashMap deployedActors = new ConcurrentHashMap<>()
 
     static List<String> activeActors () {
@@ -84,7 +64,7 @@ class Actors {
         Verticle v = actor as Verticle
 
         //deploy this specific verticle instance
-        vertx().deployVerticle(v, {ar ->
+        vertx.deployVerticle(v, {ar ->
             if (ar.succeeded()) {
                 actor.deploymentId = ar.result()
                 deployedActors.put(ar.result(), actor)
@@ -107,7 +87,7 @@ class Actors {
         Verticle v = actor as Verticle
 
         //deploy this specific verticle instance
-        vertx().deployVerticle(v, {ar ->
+        vertx.deployVerticle(v, {ar ->
             if (ar.succeeded()) {
                 actor.deploymentId = ar.result()
                 deployedActors.put(ar.result(), actor)
@@ -165,10 +145,10 @@ class Actors {
         log.debug ">>Actors.shutdown(): ${deployedActors.size()} to be shutdown "
         vertx.close(ar -> {
             if (ar.succeeded()) {
-                log.debug ">>Actors.shutdown(): close handler: actor network closed successfully "
+                log.debug ">> Actors.shutdown(): close handler: actor network closed successfully "
                 deployedActors.clear()
             } else  {
-                log.debug ">>Actors.shutdown(): close handler:couldnt close actor network,  reason ${ar.cause().message}"
+                log.debug ">> Actors.shutdown(): close handler:couldnt close actor network,  reason ${ar.cause().message}"
             }
         })
 

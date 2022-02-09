@@ -513,8 +513,9 @@ class StandardActor extends AbstractVerticle implements Actor {
     void reply (args) {
         assert args
         JsonObject json = new JsonObject()
+        json.put ('args', args)
 
-        if (args.size > 1) {
+        if (args.size() > 1) {
 
         }
 
