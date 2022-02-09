@@ -123,8 +123,7 @@ class VertxFactoryTest extends Specification {
     }
 
     def "get vertx from factory "() {
-
-
+        
         when:
         Optional<Vertx> opt = VertxFactory::vertx(context)
 
