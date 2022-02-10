@@ -16,6 +16,7 @@ import io.vertx.core.eventbus.MessageConsumer
 import io.vertx.core.json.JsonObject
 import org.codehaus.groovy.runtime.MethodClosure
 
+import javax.validation.constraints.NotNull
 import java.time.Duration
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
@@ -88,8 +89,20 @@ class StandardActor extends AbstractVerticle implements Actor {
         name.orElse("Un-Named")
     }
 
-    void setName (String name) {
-        this.name = Optional.ofNullable(name)
+    void setName (@NotNull String name) {
+        //need to reset the listener to new change of address
+        log.debug "setName: number of listeners is ${consumers.size()}"
+        MessageConsumer defaultConsumer = consumers.find{mc ->
+            log.debug "setName: checking existing consumers for default listener"
+            String defaultAddress = "actor.${owner.getClass().simpleName}@${Integer.toHexString(System.identityHashCode(this)) }".toString()
+            mc.address() == defaultAddress }
+        if (defaultConsumer){
+            log.debug "setName: removed default listener"
+            consumers.remove(defaultConsumer)
+        }
+        this.name = Optional.of(name)
+        addConsumer(this::executeAction)
+
     }
 
     //constructors
@@ -196,6 +209,8 @@ class StandardActor extends AbstractVerticle implements Actor {
 
         //see page 56
         //register the default listener for the default address
+        String address = getAddress()
+        String called = getName()
         consumers << vertx.eventBus().<JsonObject>consumer (getAddress(), this::executeAction )
 
         promise?.complete()
@@ -211,19 +226,37 @@ class StandardActor extends AbstractVerticle implements Actor {
 
     }
 
-    MessageConsumer addConsumer (Address from, consumer) {
-       MessageConsumer mc = vertx.eventBus().consumer (from.address, consumer) //consumer as Closure)
+    MessageConsumer addConsumer (Address from, Handler<Message<Object>> consumer) {
+        log.debug "added Handler as listener on specified adrress ${from.address}"
+        MessageConsumer mc = vertx.eventBus().consumer (from.address, consumer) //consumer as Closure)
         consumers << mc
         mc
     }
 
-    MessageConsumer addConsumer ( consumer) {
-        MessageConsumer mc = vertx.eventBus().consumer (new Address (this::getAddress()), consumer)
+    MessageConsumer addConsumer ( Handler<Message<Object>> consumer) {
+        log.debug "added Handler as listener on address ${getAddress()}"
+        MessageConsumer mc = vertx.eventBus().consumer (this::getAddress(), consumer)
         consumers << mc
         mc
     }
 
-    boolean removeConsumer (consumer) {
+    MessageConsumer addConsumer ( Closure<Message<Object>> consumer) {
+        log.debug "added Closure as listener on address ${getAddress()}"
+        MessageConsumer mc = vertx.eventBus().consumer (this::getAddress(), consumer)
+        consumers << mc
+        mc
+    }
+
+    MessageConsumer addConsumer ( MethodClosure consumer) {
+        log.debug "added MethodClosure as listener on address ${getAddress()}"
+
+        MessageConsumer mc = vertx.eventBus().consumer (this::getAddress(), consumer)
+        consumers << mc
+        mc
+    }
+
+    boolean removeConsumer (MessageConsumer consumer) {
+        Future<Void> fut = consumer.unregister()
         consumers.remove(consumer as MessageConsumer)
     }
 
@@ -232,6 +265,8 @@ class StandardActor extends AbstractVerticle implements Actor {
     }
 
     boolean removeAllConsumersFromAddress (String address) {
+        log.debug "removedAll listeners from address ${getAddress()}"
+
         def matched = consumers.findAll {it.address() == address}
         matched.each {it.unregister()}
         consumers.removeAll(matched)
@@ -244,21 +279,24 @@ class StandardActor extends AbstractVerticle implements Actor {
      * the handler should complete the promise in the code block
      *
      * this will run the block asynchronously on a worker thread
+     * gets a Promise that should be written at the end of the work
      * @param code
      */
-    Actor run (code) {
+    Future run (code) {
         Context ctx = vertx.getOrCreateContext()
         Future future = ctx.executeBlocking(code)
 
          future.onComplete({ arg ->
-            if (arg.succeeded()) {
-                "println completed run with [${arg.result()}]"
-                arg.result()
-            } else {
-                "println completed run failed with ${arg.cause().message}"
+             if (arg.succeeded()) {
+                 def result = arg.result()
+                 log.debug "ran code block on worker thread and returned [$result]"
+
+             } else {
+                log.debug "completed blockingCode run and failed with ${arg.cause().message}"
             }
-        })
-        this
+         })
+
+         future
     }
 
     /**
@@ -358,7 +396,7 @@ class StandardActor extends AbstractVerticle implements Actor {
         this
     }
 
-    def requestAndReply(def args, DeliveryOptions options = null) {
+    def requestAndReply(Actor actor,  args, DeliveryOptions options = null) {
         log.debug ("request&reply: [$args] sent to [${address}]")
 
         BlockingQueue results = new LinkedBlockingQueue()
@@ -369,11 +407,11 @@ class StandardActor extends AbstractVerticle implements Actor {
         // see also https://github.com/vert-x3/wiki/wiki/RFC:-Future-API
 
         //use new promise/future model - resuest is expecting a message.reply()
-        Future response = vertx.eventBus().request(address, argsMessage, options ?: new DeliveryOptions())
+        Future response = vertx.eventBus().request(actor.address, argsMessage, options ?: new DeliveryOptions())
 
         //get response and add to blocking Queue
         response.onComplete(ar -> {
-            println "in requests, response handler with [${ar.result().body()}"
+            log.debug "in requests, response handler with [${ar.result().body()}]"
             results.put (ar.result().body())
         })
 
@@ -387,7 +425,7 @@ class StandardActor extends AbstractVerticle implements Actor {
      * @param options
      * @return  vertx Future
      */
-    Future requestAndAsyncReply (def args, DeliveryOptions options = null) {
+    Future requestAndAsyncReply (Actor actor, args, DeliveryOptions options = null) {
         log.debug ("request&reply: [$args] sent to [${address}]")
 
         BlockingQueue results = new LinkedBlockingQueue()
@@ -398,7 +436,7 @@ class StandardActor extends AbstractVerticle implements Actor {
         // see also https://github.com/vert-x3/wiki/wiki/RFC:-Future-API
 
         //use new promise/future model - resuest is expecting a message.reply()
-        Future response = vertx.eventBus().request(address, argsMessage, options ?: new DeliveryOptions())
+        Future response = vertx.eventBus().request(actor.address, argsMessage, options ?: new DeliveryOptions())
     }
 
     /**
@@ -433,12 +471,17 @@ class StandardActor extends AbstractVerticle implements Actor {
     }*/
 
     // can be chained
-    Actor send (def args, DeliveryOptions options = null) {
+    Actor send ( args, DeliveryOptions options = null) {
         send (new Address(this.getAddress()), args, options)
         this
     }
 
-    Actor send (Address postTo, def args, DeliveryOptions options = null) {
+    Actor send (Actor anotherActor, args, DeliveryOptions options = null) {
+        send (anotherActor.address, args, options)
+        this
+    }
+
+    Actor send (Address postTo, args, DeliveryOptions options = null) {
         assert postTo
         log.debug ("send: [$args] sent to [${postTo.address}]")
 

@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 @Factory
 @Slf4j
-class Actors {
+class Actors<T> {
 
     static Vertx vertx
 

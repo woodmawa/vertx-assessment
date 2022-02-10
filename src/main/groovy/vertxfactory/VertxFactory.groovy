@@ -37,7 +37,7 @@ class VertxFactory {
         //force lookup to generate the bean
         Future<Vertx> fv = ctx.getBean (Future<Vertx>,Qualifiers.byName("Vertx"))
 
-        if (futureServer == null && !vertx) {
+        if (futureServer == null && vertx == null) {
             throw new ExceptionInInitializerError("Actors context has not been initialised, use localInit() or clusteredInit() first  ")
         } else if (futureServer.isComplete()){
             if (futureServer.succeeded()) {
@@ -56,8 +56,7 @@ class VertxFactory {
     }
 
     static Optional<Vertx> vertx() {
-        assert futureServer
-        if (futureServer.isComplete())
+        if (futureServer?.isComplete())
             Optional.ofNullable(vertx)
         else
             Optional.empty()
