@@ -7,6 +7,7 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import jakarta.inject.Inject
+import jakarta.inject.Named
 import jakarta.inject.Qualifier
 import spock.lang.Shared
 import spock.lang.Specification
@@ -21,6 +22,9 @@ class VertxFactoryTest extends Specification {
 
     @Shared
     Vertx vertxFromFactory
+
+    //attribute injection
+    @Inject @Named ("Vertx") Future<Vertx> injectedFuture
 
     def setupSpec () {
 
@@ -122,13 +126,37 @@ class VertxFactoryTest extends Specification {
         vertxFromFactory.isClustered() == false
     }
 
-    def "get vertx from factory "() {
-        
+    def "get vertx from factory using context "() {
+
         when:
         Optional<Vertx> opt = VertxFactory::vertx(context)
 
         then:
         opt.isPresent()
+    }
+
+    def "get vertx from factory,  testing bean generation "() {
+
+        when:
+        Optional<Vertx> opt = VertxFactory::vertx()
+
+        then:
+        opt.isPresent()
+    }
+
+    def "injected Future<Vertx>, confirm vertxFactory vertx is same as injectedFuture"() {
+        Optional<Vertx> opt
+        Vertx vertx, vertx2
+
+        setup:
+        opt = VertxFactory::vertx()
+        vertx =opt.orElse(null)
+        vertx2 = injectedFuture.result()
+
+        expect:
+        injectedFuture
+        injectedFuture.succeeded()
+        vertx === vertx2
     }
 
 }

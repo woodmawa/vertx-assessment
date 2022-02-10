@@ -2,11 +2,13 @@ plugins {
     id 'groovy'
     id("com.github.johnrengelman.shadow") version "7.1.1"
 
-    id 'io.micronaut.application' version '3.2.1'
+    id 'io.micronaut.application' version '3.2.1' //use for building mn apps
+    //id 'io.micronaut.library' version '3.2.1'   // use this for building mn libraries
 }
 
 micronaut {
-    version = "3.3.0"
+    version = "3.3.1"
+    runtime "netty"
 }
 
 java {
@@ -15,7 +17,7 @@ java {
     }
 }
 
-group 'org.example'
+group 'org.softwood'
 version '1.0-SNAPSHOT'
 
 
@@ -65,6 +67,9 @@ dependencies {
     compileOnly("io.micronaut:micronaut-http-validation")
     runtimeOnly("ch.qos.logback:logback-classic")
     implementation("io.micronaut:micronaut-validation")
+    //add these to enable bean introspection
+    runtimeOnly("io.micronaut:micronaut-core")
+    compileOnly ("io.micronaut:micronaut-inject-groovy")
 
     //add extra groovy support
     //implementation group: 'io.micronaut.groovy', name: 'micronaut-groovy-bom', version: '3.0.0', ext: 'pom'

@@ -4,7 +4,6 @@ package vertxfactory
 import groovy.util.logging.Slf4j
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Bean
-import io.micronaut.context.annotation.Context
 import io.micronaut.context.annotation.Factory
 import io.micronaut.context.annotation.Requires
 import io.micronaut.inject.qualifiers.Qualifiers
@@ -24,8 +23,8 @@ class VertxFactory {
     @Inject ConfigObject appConfig
 
     static Vertx vertx
-
-    static Future futureServer
+    static Future<Vertx> futureServer
+    static ServerMode serverMode = ServerMode.indeterminate
 
     /*
      * incase in clustered mode we have to check if the future succeeded or not
@@ -37,8 +36,6 @@ class VertxFactory {
 
         //force lookup to generate the bean
         Future<Vertx> fv = ctx.getBean (Future<Vertx>,Qualifiers.byName("Vertx"))
-
-        fv
 
         if (futureServer == null && !vertx) {
             throw new ExceptionInInitializerError("Actors context has not been initialised, use localInit() or clusteredInit() first  ")
@@ -56,6 +53,20 @@ class VertxFactory {
                     .onFailure { println "failed ${it.cause().message}" }
             Optional.ofNullable(fut.otherwise(void))
         }
+    }
+
+    static Optional<Vertx> vertx() {
+        assert futureServer
+        if (futureServer.isComplete())
+            Optional.ofNullable(vertx)
+        else
+            Optional.empty()
+    }
+
+    //shutdown hook when the vertx is closed
+    static void vertxShutdown() {
+        log.info "vertxShutdown: responding to vertx closure "
+        serverMode = ServerMode.indeterminate
     }
 
     //micronaught expects instance methods when using the StartupCondition as shown
@@ -79,10 +90,13 @@ class VertxFactory {
         Vertx.clusteredVertx(clusterOptions, ar -> {
             if (ar.succeeded()) {
                  vertx = ar.result()
+                vertx.addShutdownHook (this::vertxShutdown)
+
                 clusterStartPromise.complete(vertx)
-                log.info ("clustered vertx started successfully")
+                serverMode = ServerMode.clustered
+                log.info ("clusterInit: clustered vertx started successfully")
             } else {
-                log.error("couldn't start clustered vertx, reason : ${ar.cause().message}")
+                log.error("clusterInit: couldn't start clustered vertx, reason : ${ar.cause().message}")
                 clusterStartPromise.fail(new RuntimeException("clusteredVertx failed to start with ${ar.cause().message}"))
             }
         })
@@ -107,10 +121,20 @@ class VertxFactory {
         Promise startPromise = Promise.promise()
 
         vertx = Vertx.vertx()
+        vertx.addShutdownHook (this::vertxShutdown)
+
         startPromise.complete(vertx)
-        log.info ("local vertx started successfully")
+        serverMode = ServerMode.local
+
+        log.info ("localInit: local vertx started successfully")
 
         futureServer = startPromise.future()
     }
 
+}
+
+enum ServerMode {
+    local,
+    clustered,
+    indeterminate
 }
