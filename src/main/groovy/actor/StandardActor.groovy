@@ -369,34 +369,54 @@ class StandardActor extends AbstractVerticle implements Actor {
         timer.cancel()
     }
 
-    //post and publish actions can be chained on the returned event bus
-    Actor post (def args, DeliveryOptions options=null) {
-        publish (new Address (this.getAddress()), args, options)
-        this
+    //post and publish are synonymous actions, can be chained on the returned event bus
+    Actor post (Actor actor, def args, DeliveryOptions options=null) {
+        publish (actor.address, args, options)
     }
 
     Actor post (Address postTo, def args, DeliveryOptions options=null) {
         publish (postTo, args, options)
-        this
     }
 
-    Actor publish (def args, DeliveryOptions options=null) {
-        publish (new Address (this.getAddress()), args, options)
-        this
+    /*
+     * pub-sub: - publish to some address
+     */
+    Actor publishToSelf (def args, DeliveryOptions options=null) {
+        publish (this.getAddress(), args, options)
+    }
+
+    Actor publish (Actor actor, def args, DeliveryOptions options=null) {
+        publish (actor.address, args, options)
     }
 
     Actor publish (Address postTo, def args, DeliveryOptions options=null) {
-        log.debug ("publish: [$args] sent to [${postTo.address}]")
+        requestAndReply(postTo.address, args, options)
+    }
 
-        //wrap args in jsonObject
+    Actor publish (String address, def args, DeliveryOptions options=null) {
         JsonObject argsMessage = new JsonObject()
         argsMessage.put("args", args)
 
-        vertx.eventBus().publish(postTo.address, argsMessage, options ?: new DeliveryOptions ())
+        vertx.eventBus().publish (address, argsMessage, options ?: new DeliveryOptions())
         this
     }
 
+    /*
+    * request with  response : - publish to some address
+    */
+    def requestToSelfAndReply (args, DeliveryOptions options = null) {
+        requestAndReply(this.address, args, options)
+    }
+
     def requestAndReply(Actor actor,  args, DeliveryOptions options = null) {
+        requestAndReply(actor.address, args, options)
+    }
+
+    def requestAndReply(Address address,  args, DeliveryOptions options = null) {
+        requestAndReply(address.address, args, options)
+    }
+
+    def requestAndReply(String address,  args, DeliveryOptions options = null) {
         log.debug ("request&reply: [$args] sent to [${address}]")
 
         BlockingQueue results = new LinkedBlockingQueue()
@@ -407,7 +427,7 @@ class StandardActor extends AbstractVerticle implements Actor {
         // see also https://github.com/vert-x3/wiki/wiki/RFC:-Future-API
 
         //use new promise/future model - resuest is expecting a message.reply()
-        Future response = vertx.eventBus().request(actor.address, argsMessage, options ?: new DeliveryOptions())
+        Future response = vertx.eventBus().request(address, argsMessage, options ?: new DeliveryOptions())
 
         //get response and add to blocking Queue
         response.onComplete(ar -> {
@@ -425,8 +445,17 @@ class StandardActor extends AbstractVerticle implements Actor {
      * @param options
      * @return  vertx Future
      */
+
     Future requestAndAsyncReply (Actor actor, args, DeliveryOptions options = null) {
-        log.debug ("request&reply: [$args] sent to [${address}]")
+        requestAndAsyncReply (actor.address, args, options)
+    }
+
+    Future requestAndAsyncReply (Address address, args, DeliveryOptions options = null) {
+        requestAndAsyncReply (address.address, args, options)
+    }
+
+    Future requestAndAsyncReply (String address, args, DeliveryOptions options = null) {
+        log.debug ("request&asyncReply: [$args] sent to [${address}]")
 
         BlockingQueue results = new LinkedBlockingQueue()
 
@@ -436,7 +465,7 @@ class StandardActor extends AbstractVerticle implements Actor {
         // see also https://github.com/vert-x3/wiki/wiki/RFC:-Future-API
 
         //use new promise/future model - resuest is expecting a message.reply()
-        Future response = vertx.eventBus().request(actor.address, argsMessage, options ?: new DeliveryOptions())
+        Future response = vertx.eventBus().request(address, argsMessage, options ?: new DeliveryOptions())
     }
 
     /**
@@ -456,40 +485,27 @@ class StandardActor extends AbstractVerticle implements Actor {
         this
     }
 
-    //with result of this request/reply invoke next actor with that result
-    /*Actor rightShift (StandardActor next) {
-        Future future = this.requestAndAsyncReply(1)
-                future.onComplete {ar ->
-                    if (ar.succeeded()) {
-                        def res = ar.result()
-                        next.send(ar.result())
-                    } else {
-                        log.debug "rightShift: got exeption ${ar.cause()}"
-                    }
-                }
-        next
-    }*/
-
     // can be chained
-    Actor send ( args, DeliveryOptions options = null) {
-        send (new Address(this.getAddress()), args, options)
-        this
+    Actor sendToSelf ( args, DeliveryOptions options = null) {
+        send (this.getAddress(), args, options)
     }
 
     Actor send (Actor anotherActor, args, DeliveryOptions options = null) {
         send (anotherActor.address, args, options)
-        this
     }
 
     Actor send (Address postTo, args, DeliveryOptions options = null) {
-        assert postTo
-        log.debug ("send: [$args] sent to [${postTo.address}]")
+        send (postTo.address, args, options)
+    }
+
+    Actor send (String address, args, DeliveryOptions options = null) {
+        log.debug ("send: [$args] sent to [${address}]")
 
         //wrap args in jsonObject
         JsonObject argsMessage = new JsonObject()
         argsMessage.put("args", args)
 
-        vertx.eventBus().send(postTo.address, argsMessage, options ?: new DeliveryOptions())
+        vertx.eventBus().send(address, argsMessage, options ?: new DeliveryOptions())
         this
     }
 
