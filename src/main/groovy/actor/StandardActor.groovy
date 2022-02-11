@@ -13,6 +13,7 @@ import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.EventBus
 import io.vertx.core.eventbus.Message
 import io.vertx.core.eventbus.MessageConsumer
+import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
 import org.codehaus.groovy.runtime.MethodClosure
 
@@ -35,44 +36,56 @@ class StandardActor extends AbstractVerticle implements Actor {
 
     List<MessageConsumer> consumers = []
 
-    def onMessage (def args) {
+    protected def onMessage (def args) {
         log.info "default untyped args Actor.action invoked with $args"
 
         args
     }
 
-    def onMessage (Integer arg) {
+    protected def onMessage (Integer arg) {
         log.info "default Integer Actor.action invoked with $arg"
 
         arg
     }
 
-    def onMessage (BigInteger arg) {
+    protected def onMessage (BigInteger arg) {
         log.info "default BigInteger Actor.action invoked with $arg"
 
         arg
     }
 
-    def onMessage (Float arg) {
+    protected def onMessage (Float arg) {
         log.info "default Float Actor.action invoked with $arg"
 
         arg
     }
 
-    def onMessage (Double arg) {
+    protected def onMessage (Double arg) {
         log.info "default Double Actor.action invoked with $arg"
 
         arg
     }
 
-    def onMessage (BigDecimal arg) {
+    protected def onMessage (BigDecimal arg) {
         log.info "default BigDecimal Actor.action invoked with $arg"
 
         arg
     }
 
-    def onMessage (String arg) {
+    protected def onMessage (String arg) {
         log.info "default String Actor.action invoked with $arg"
+
+        arg
+    }
+
+    protected def onMessage (JsonObject arg) {
+        log.info "default JsonObject Actor.action invoked with $arg"
+
+        arg
+    }
+
+    protected def onMessage (JsonArray arg) {
+        log.info "default JsonArray Actor.action invoked with $arg"
 
         arg
     }
@@ -309,9 +322,12 @@ class StandardActor extends AbstractVerticle implements Actor {
         assert scheduledWork
         Promise promise = Promise.promise()
 
-        Closure withPromise = { scheduledWork(promise) }
+        Closure schWork = scheduledWork.clone()
+        schWork.delegate = this
 
-        Timer timer = new Timer (tid: vertx.setTimer(delay, withPromise ))
+        Closure schWorkWithPromise = { schWork (promise) }
+
+        Timer timer = new Timer (tid: vertx.setTimer(delay, schWorkWithPromise ))
         timer.future = promise.future()
         timer
     }
@@ -320,9 +336,12 @@ class StandardActor extends AbstractVerticle implements Actor {
         assert scheduledWork
         Promise promise = Promise.promise()
 
-        Closure withPromise = { scheduledWork(promise) }
+        Closure schWork = scheduledWork.clone()
+        schWork.delegate = this
 
-        Timer timer = new Timer (tid:vertx.setTimer(delay.toMillis(), withPromise))
+        Closure schWorkWithPromise = { schWork (promise) }
+
+        Timer timer = new Timer (tid:vertx.setTimer(delay.toMillis(), schWorkWithPromise))
         timer.future = promise.future()
         timer
     }
@@ -337,10 +356,13 @@ class StandardActor extends AbstractVerticle implements Actor {
         assert scheduledWork
         Promise promise = Promise.promise()
 
-        Closure withPromise = { scheduledWork(promise) }
+        Closure schWork = scheduledWork.clone()
+        schWork.delegate = this
+
+        Closure schWorkWithPromise = { schWork (promise) }
 
         //todo this may not work with repeated timer ticks
-        Timer timer = new Timer (tid:vertx.setPeriodic (delay, withPromise))
+        Timer timer = new Timer (tid:vertx.setPeriodic (delay, schWorkWithPromise))
         timer.future = promise.future()
         timer
     }
@@ -349,9 +371,12 @@ class StandardActor extends AbstractVerticle implements Actor {
         assert scheduledWork
         Promise promise = Promise.promise()
 
-        Closure withPromise = { scheduledWork(promise) }
+        Closure schWork = scheduledWork.clone()
+        schWork.delegate = this
 
-        Timer timer = new Timer (tid:  vertx.setPeriodic (delay.toMillis(), withPromise))
+        Closure schWorkWithPromise = { schWork (promise) }
+
+        Timer timer = new Timer (tid:  vertx.setPeriodic (delay.toMillis(), schWorkWithPromise))
         timer.future = promise.future()
         timer
     }
@@ -366,7 +391,10 @@ class StandardActor extends AbstractVerticle implements Actor {
 
     boolean cancelTimer (Timer timer) {
         assert timer
+        long tid = timer.timerId
+        boolean cancelled = vertx.cancelTimer(tid)
         timer.cancel()
+        cancelled
     }
 
     //post and publish are synonymous actions, can be chained on the returned event bus

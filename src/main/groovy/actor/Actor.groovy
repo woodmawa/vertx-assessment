@@ -45,6 +45,10 @@ interface  Actor {
     Timer timer (long delay, Closure scheduledWork )
     Timer timer (Duration delay, Closure scheduledWork )
 
+    boolean cancelTimer (long id)
+    boolean cancelTimer (Timer tid)
+
+
     //run code block on vertx thread and return result as future
     Future run (code)
 }
