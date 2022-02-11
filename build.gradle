@@ -77,6 +77,9 @@ dependencies {
 
     //from release testing guide 3.3.0
     testImplementation "io.micronaut:micronaut-inject-groovy"  //for when we want to mock beans
+    testImplementation "io.micronaut.test:micronaut-test-core"  //added test core
+    testImplementation "io.micronaut.test:micronaut-test-junit5"  //added test junit5
+
     testImplementation "io.micronaut.test:micronaut-test-spock"
     testImplementation("org.spockframework:spock-core") {
         exclude group: "org.codehaus.groovy", module: "groovy-all"

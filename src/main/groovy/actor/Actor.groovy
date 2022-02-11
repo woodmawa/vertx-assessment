@@ -41,13 +41,23 @@ interface  Actor {
     def requestAndReply(String address, args)
     def requestAndReply(String address, args, DeliveryOptions options)
 
-    //async request, get a future as reponse
+    //async request, get a future as response
     Future requestAndAsyncReply(Address address, args)
     Future requestAndAsyncReply(Address address, args, DeliveryOptions options)
     Future requestAndAsyncReply(Actor actor, args)
     Future requestAndAsyncReply(Actor actor, args, DeliveryOptions options)
     Future requestAndAsyncReply(String address, args)
     Future requestAndAsyncReply(String address, args, DeliveryOptions options)
+
+    //pub-sub
+    Actor post (Actor actor, def args)
+    Actor post (Actor actor, def args, DeliveryOptions options)
+    Actor post (Address postTo, def args)
+    Actor post (Address postTo, def args, DeliveryOptions options)
+    Actor publish (Actor actor, def args)
+    Actor publish (Actor actor, def args, DeliveryOptions options)
+    Actor publish (Address postTo, def args)
+    Actor publish (Address postTo, def args, DeliveryOptions options)
 
     //manual start and stop options for verticles
     void start()
