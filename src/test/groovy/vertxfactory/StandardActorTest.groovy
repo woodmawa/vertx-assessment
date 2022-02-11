@@ -7,6 +7,7 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.vertx.core.Context
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.EventBus
+import io.vertx.junit5.VertxTestContext
 import jakarta.inject.Inject
 import spock.lang.Specification
 import spock.util.concurrent.PollingConditions
@@ -34,7 +35,7 @@ class StandardActorTest extends Specification {
     def "basic vertx event bus send and respond " () {
         setup :
         Vertx vertx = Actors.vertx
-        //def testContext = new VertxTestContext()
+        VertxTestContext testContext = new VertxTestContext()
         Context vctx = vertx.getOrCreateContext()
         String salutation = "hello will"
         //def conditions = new PollingConditions(timeout: 3)
@@ -43,10 +44,11 @@ class StandardActorTest extends Specification {
         when:
         //set listener on 'address'
         vertx.eventBus().consumer("address") { message ->
-            /*context.verify {
-                assertEquals(message, event.body())
+            testContext.verify {
+                assert salutation == message.body()
             }
-            context.completeNow()*/
+            testContext.completeNow()
+
             def body = message.body()
             println "got message body : " + body
 
