@@ -5,11 +5,13 @@ import actor.Actors
 import io.micronaut.context.ApplicationContext
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.vertx.core.Context
+import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.EventBus
 import io.vertx.junit5.VertxTestContext
 import jakarta.inject.Inject
 import spock.lang.Specification
+import spock.util.concurrent.AsyncConditions
 import spock.util.concurrent.PollingConditions
 
 @MicronautTest
@@ -38,7 +40,9 @@ class StandardActorTest extends Specification {
         VertxTestContext testContext = new VertxTestContext()
         Context vctx = vertx.getOrCreateContext()
         String salutation = "hello will"
-        //def conditions = new PollingConditions(timeout: 3)
+        def async = new AsyncConditions()
+        def response
+        def conditions = new PollingConditions(timeout: 3)
 
 
         when:
@@ -53,18 +57,32 @@ class StandardActorTest extends Specification {
             println "got message body : " + body
 
             println "return address is : " + message.replyAddress()
-            message.reply("..and good day to you to ")
+            message.reply("..and good day to you to")
 
 
         }
 
         //then send message to that address
-        EventBus eventBus = vertx.eventBus().send("address", salutation)
+        //EventBus eventBus
+
+        Future result = vertx.eventBus().request("address", salutation)
+
+        result.onComplete { ar ->
+            if (ar.succeeded()) {
+                println "..received a response  : " + ar.result().body()
+                response = ar.result().body()
+            } else  {
+                response = ar.cause().message
+                println ar.cause()
+            }
+        }
+
+
+
 
         then:
-        true
-        /*conditions.eventually {
-            assert it.isClosed.isComplete()
-        }*/
+        conditions.within(2) {
+            assert response == "..and good day to you to"
+        }
     }
 }
