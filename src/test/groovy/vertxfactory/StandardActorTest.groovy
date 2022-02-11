@@ -37,7 +37,7 @@ class StandardActorTest extends Specification {
     def "basic vertx event bus send and respond " () {
         setup :
         Vertx vertx = Actors.vertx
-        VertxTestContext testContext = new VertxTestContext()
+        VertxTestContext vertxTestContext = new VertxTestContext()
         Context vctx = vertx.getOrCreateContext()
         String salutation = "hello will"
         def async = new AsyncConditions()
@@ -48,10 +48,10 @@ class StandardActorTest extends Specification {
         when:
         //set listener on 'address'
         vertx.eventBus().consumer("address") { message ->
-            testContext.verify {
+            vertxTestContext.verify {
                 assert salutation == message.body()
             }
-            testContext.completeNow()
+            vertxTestContext.completeNow()
 
             def body = message.body()
             println "got message body : " + body
@@ -76,8 +76,6 @@ class StandardActorTest extends Specification {
                 println ar.cause()
             }
         }
-
-
 
 
         then:
