@@ -392,8 +392,8 @@ class StandardActor extends AbstractVerticle implements Actor {
     boolean cancelTimer (Timer timer) {
         assert timer
         long tid = timer.timerId
-        boolean cancelled = vertx.cancelTimer(tid)
-        timer.cancel()
+        //boolean cancelled = vertx.cancelTimer(tid)
+        boolean cancelled = timer.cancel()
         cancelled
     }
 

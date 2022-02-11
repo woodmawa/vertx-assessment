@@ -1,7 +1,11 @@
 package actor
 
 import io.vertx.core.Future
+import io.vertx.core.Handler
 import io.vertx.core.eventbus.DeliveryOptions
+import io.vertx.core.eventbus.Message
+import io.vertx.core.eventbus.MessageConsumer
+import org.codehaus.groovy.runtime.MethodClosure
 
 import java.time.Duration
 
@@ -10,6 +14,16 @@ interface  Actor {
 
     String getName()
     String getAddress()
+
+    //manage subscriptions
+    MessageConsumer addConsumer (Address from, Handler<Message<Object>> consumer)
+    MessageConsumer addConsumer ( Closure<Message<Object>> consumer)
+    MessageConsumer addConsumer (MethodClosure consumer)
+    MessageConsumer addConsumer ( Handler<Message<Object>> consumer)
+
+    boolean removeConsumer (MessageConsumer consumer)
+    boolean removeAllConsumersFromAddress (Address postTo)
+    boolean removeAllConsumersFromAddress (String address)
 
     //no response expected
     Actor send(Address postTo, args)
