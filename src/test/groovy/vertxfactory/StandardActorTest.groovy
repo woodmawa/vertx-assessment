@@ -1,6 +1,7 @@
 package vertxfactory
 
 import actor.Actor
+import actor.ActorState
 import actor.Actors
 import io.micronaut.context.ApplicationContext
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -20,6 +21,29 @@ class StandardActorTest extends Specification {
     @Inject Actor initiator  //start already been called for inject targets
     @Inject Actor responder
     @Inject ApplicationContext context
+
+    def "check actors deployedActors list is correctly managed" () {
+        setup:
+        def conditions = new PollingConditions(timeout: 5)
+
+        when:
+        assert Actors.getDeployedActors().size() == 0
+
+        conditions.within(2) {
+            //as initiator and responder are injected and in Running state
+            assert initiator.status == ActorState.Running
+            assert responder.status == ActorState.Running
+            assert Actors.getDeployedActors().size() == 2
+         }
+        responder.stop()
+
+        then:
+        conditions.within(5) {
+            responder.status == ActorState.Stopped
+            Actors.getDeployedActors().size() == 1
+            Actors.getDeployedActors()[(initiator.deploymentId)] == initiator
+        }
+    }
 
     def "send and receive reply " () {
         setup:

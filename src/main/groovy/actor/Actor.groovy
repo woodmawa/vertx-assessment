@@ -14,6 +14,8 @@ interface  Actor {
 
     String getName()
     String getAddress()
+    String getDeploymentId()
+    ActorState getStatus()
 
     //manage subscriptions
     MessageConsumer addConsumer (Address from, Handler<Message<Object>> consumer)

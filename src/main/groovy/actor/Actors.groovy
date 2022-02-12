@@ -26,6 +26,10 @@ class Actors<T> {
 
     static Future futureServer
 
+    /*
+     * if static methods are used (rather than direct new action) the actor
+     * returned will have been started automatically and ready for use
+     */
     //constructor injection here
     @Inject Actors (@Named("Vertx") Future<Vertx> future) {
         if (!futureServer) {
@@ -48,6 +52,20 @@ class Actors<T> {
         vertx.deploymentIDs().collect()
     }
 
+    static void removeDeployedActor (Actor actor) {
+        vertx.undeploy(actor.deploymentId) {ar ->
+            if (ar.succeeded()){
+                log.info "successfully undeployed ${actor.name}"
+            } else {
+                log.error "failed to undeploy ${actor.name}, reason : " + ar.cause()
+            }
+        }
+        deployedActors.remove(actor.deploymentId)
+    }
+
+    static addDeployedActor (Actor actor) {
+        deployedActors.putIfAbsent (actor.deploymentId, actor)
+    }
     /**
      * actor with name
      * @param String name, can be null
@@ -67,7 +85,7 @@ class Actors<T> {
         vertx.deployVerticle(v, {ar ->
             if (ar.succeeded()) {
                 actor.deploymentId = ar.result()
-                deployedActors.put(ar.result(), actor)
+                addDeployedActor(actor)
 
                 log.debug ("Actors.actor(): started verticle $this successfully and got deploymentId ${ar.result()}")
 
@@ -90,7 +108,7 @@ class Actors<T> {
         vertx.deployVerticle(v, {ar ->
             if (ar.succeeded()) {
                 actor.deploymentId = ar.result()
-                deployedActors.put(ar.result(), actor)
+                addDeployedActor(actor)
 
                 log.debug ("Actors.actor(): started verticle $this successfully and got deploymentId ${ar.result()}")
 
@@ -128,7 +146,7 @@ class Actors<T> {
         vertx.deployVerticle(v, {ar ->
             if (ar.succeeded()) {
                 actor.deploymentId = ar.result()
-                deployedActors.put(ar.result(), actor)
+                addDeployedActor(actor)
 
                 log.debug ("Actors.actor(): started verticle $this successfully and got deploymentId ${ar.result()}")
 

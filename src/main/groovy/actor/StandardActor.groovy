@@ -15,6 +15,7 @@ import io.vertx.core.eventbus.Message
 import io.vertx.core.eventbus.MessageConsumer
 import io.vertx.core.json.JsonArray
 import io.vertx.core.json.JsonObject
+import jakarta.annotation.PreDestroy
 import org.codehaus.groovy.runtime.MethodClosure
 
 import javax.validation.constraints.NotNull
@@ -32,9 +33,25 @@ class StandardActor extends AbstractVerticle implements Actor {
 
     private Optional<String> name = Optional.of ("${getClass().simpleName}@${Integer.toHexString(System.identityHashCode(this)) }")
     //private address = "actor.${->getName()}".toString()
-    String deploymentId = ""
+    private String deploymentId = ""
+    private ActorState status = ActorState.Created
+
+    String getDeploymentId () {
+        deploymentId
+    }
+
+    ActorState getStatus() {
+        status
+    }
 
     List<MessageConsumer> consumers = []
+
+    @PreDestroy
+    void finalise () {
+        log.debug "finalise: remove this actor [$name] from list of deployed actors in Actors"
+        Actors.removeDeployedActor (this)
+    }
+
 
     protected def onMessage (def args) {
         log.info "default untyped args Actor.action invoked with $args"
@@ -185,7 +202,8 @@ class StandardActor extends AbstractVerticle implements Actor {
         futureVerticle.onComplete({ar ->
             if (ar.succeeded()) {
                 this.deploymentId = ar.result()
-                Actors.deployedActors.put(ar.result(), this)
+                Actors.addDeployedActor (this)
+                status = ActorState.Running
 
                 log.debug ("${this.getClass().name} actor: started actor  $this successfully and got deploymentId ${ar.result()}, #listners = ${consumers.size()}")
             } else {
@@ -202,12 +220,13 @@ class StandardActor extends AbstractVerticle implements Actor {
         consumers.each {it.unregister()}
         consumers.clear()
 
-        Vertx vertx = Actors.vertx()
+        Vertx vertx = Actors.vertx
         Future future = vertx.undeploy(this.deploymentId)
         future.onComplete({ar ->
             if (ar.succeeded()) {
-                def undeployed = Actors.deployedActors.remove(deploymentId)
-                assert undeployed == this
+                Actors.removeDeployedActor (this)
+                status = ActorState.Stopped
+
                 log.debug ("${this.getClass().name} actor: stop actor  ${getName()}[dep:$deploymentId] successfully undeployed ")
             } else {
                 log.debug ("${this.getClass().name} actor: stop actor  failed to undeploy, reason ${ar.cause().message} ")
@@ -215,7 +234,7 @@ class StandardActor extends AbstractVerticle implements Actor {
         })
     }
 
-    //verticle start and stop methods
+    //verticle start and stop methods - when start is running the deploymentId has not yet been generated
     void start(Promise<Void> promise) {
 
         log.debug "start: register listeners on [$address]"
@@ -225,6 +244,7 @@ class StandardActor extends AbstractVerticle implements Actor {
         String address = getAddress()
         String called = getName()
         consumers << vertx.eventBus().<JsonObject>consumer (getAddress(), this::executeAction )
+        status = ActorState.Running
 
         promise?.complete()
     }
@@ -234,6 +254,8 @@ class StandardActor extends AbstractVerticle implements Actor {
 
         consumers.each {it.unregister()}
         consumers.clear()
+        Actors.removeDeployedActor (this)
+        status = ActorState.Stopped
 
         promise?.complete()
 
