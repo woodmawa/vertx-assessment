@@ -136,7 +136,7 @@ class Actors<T> {
             futureServer.onComplete { ar ->
                 if (ar.succeeded()) {
                     vertx = ar.result()
-                    
+
                 } else {
                     ar.cause().printStackTrace()
                 }
