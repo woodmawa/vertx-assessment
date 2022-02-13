@@ -86,6 +86,8 @@ class Actors<T> {
             if (ar.succeeded()) {
                 actor.deploymentId = ar.result()
                 addDeployedActor(actor)
+                actor.status = ActorState.Running
+
 
                 log.debug ("Actors.actor(): started verticle $this successfully and got deploymentId ${ar.result()}")
 
@@ -109,6 +111,8 @@ class Actors<T> {
             if (ar.succeeded()) {
                 actor.deploymentId = ar.result()
                 addDeployedActor(actor)
+                actor.status = ActorState.Running
+
 
                 log.debug ("Actors.actor(): started verticle $this successfully and got deploymentId ${ar.result()}")
 
@@ -132,6 +136,7 @@ class Actors<T> {
             futureServer.onComplete { ar ->
                 if (ar.succeeded()) {
                     vertx = ar.result()
+                    
                 } else {
                     ar.cause().printStackTrace()
                 }
@@ -147,6 +152,7 @@ class Actors<T> {
             if (ar.succeeded()) {
                 actor.deploymentId = ar.result()
                 addDeployedActor(actor)
+                actor.status = ActorState.Running
 
                 log.debug ("Actors.actor(): started verticle $this successfully and got deploymentId ${ar.result()}")
 
