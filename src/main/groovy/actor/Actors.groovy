@@ -67,10 +67,10 @@ class Actors<T> {
         deployedActors.putIfAbsent (actor.deploymentId, actor)
     }
     /**
-     * actor with name
+     * actor with name and optional action closure , automatically returns a started actor
      * @param String name, can be null
      * @param Closure action,  for action - default provided which just returns it
-     * @return
+     * @return returns a started actor
      */
     static Actor actor (String name, Closure action=null) {
         StandardActor actor
@@ -102,6 +102,11 @@ class Actors<T> {
     }
 
 
+    /**
+     * actor with optional action closure , automatically returns a started actor
+     * @param Closure action,  for action - default provided which just returns it
+     * @return returns a started actor
+     */
     static Actor actor (Closure action=null) {
         StandardActor actor = new StandardActor (action)
         Verticle v = actor as Verticle
@@ -178,5 +183,16 @@ class Actors<T> {
 
         futureServer = null
         vertx = null
+    }
+
+    static undeploy (Actor actor) {
+        vertx.undeploy(actor.deploymentId) {ar ->
+            if (ar.succeeded()) {
+                log.debug "undeployed actor $actor.name with deploymentId $actor.deploymentId"
+                Actors.undeploy(actor )
+            } else {
+                log.error ("couldn't undeploy $actor.name with deploymentId [$actor.deploymentId]")
+            }
+        }
     }
 }

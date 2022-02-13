@@ -254,7 +254,6 @@ class StandardActor extends AbstractVerticle implements Actor {
 
         consumers.each {it.unregister()}
         consumers.clear()
-        Actors.removeDeployedActor (this)
         status = ActorState.Stopped
 
         promise?.complete()
