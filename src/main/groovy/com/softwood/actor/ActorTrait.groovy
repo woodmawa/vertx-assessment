@@ -6,6 +6,7 @@ import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.MultiMap
 import io.vertx.core.Promise
+import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.Message
@@ -21,26 +22,19 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 
 @Slf4j
-trait ActorTrait {
+trait ActorTrait implements Verticle {
 
-    protected Vertx vertx
+    //getVertx() is defined in Verticle interface
 
-    protected ActorState status = ActorState.Created
-    protected Optional<String> name = Optional.of ("${getClass().simpleName}@${Integer.toHexString(System.identityHashCode(this)) }")
-    protected String deploymentId = ""
-    protected List<MessageConsumer> consumers = []
-    protected MethodClosure action = { it }  //identity closure
+    ActorState getStatus () {_status}
+    void setStatus (ActorState state) {_status = state}
 
+    String getDeploymentId () {_deploymentId}
+    void setDeploymentId (String did) {
+        _deploymentId = did
+    }
 
-
-    Vertx getVertx() {vertx}
-    ActorState getStatus () {status}
-    void setStatus (@NotNull ActorState state) {status = state}
-
-    String getDeploymentId () {deploymentId}
-    void setDeploymentId (@NotNull String did) {deploymentId = did }
-
-    List<MessageConsumer> getConsumers() {consumers}
+  List<MessageConsumer> getConsumers() {_consumers}
 
 
     @PreDestroy
@@ -55,7 +49,7 @@ trait ActorTrait {
     }
 
     String getName () {
-        name.orElse("Un-Named")
+        _name.orElse("Un-Named")
     }
 
     void setName (@NotNull String name) {
@@ -69,65 +63,77 @@ trait ActorTrait {
             log.debug "setName: removed default listener"
             consumers.remove(defaultConsumer)
         }
-        this.name = Optional.of(name)
-        addConsumer(this::executeAction)
+        this._name = Optional.of(name)
+        //if already deployed, add this as consumer for the new name
+        if (getVertx())
+            addConsumer(this::executeAction)
+        else {
+            log.info "changed name of actor to ${getName()} to verticle is not yet deployed "
+        }
 
     }
 
+    Closure getAction () {_action}
+
     void setAction (@NotNull Closure work) {
-        Closure action = work.clone()
-        action.delegate = this
+        _action = work.clone()
+        _action.delegate = this
 
     }
 
     def getSelf () {this}
 
     //verticle start and stop methods - when start is running the deploymentId has not yet been generated
-    Future<Void> start(Promise<Void> promise) {
+    void start(Promise<Void> promise) {
 
-        log.debug "start: register listeners on [$address]"
+        log.debug "start: register listeners on [${getAddress().address}]"
 
         //see page 56
         //register the default listener for the default address
-        String address = getAddress()
-        String called = getName()
-        consumers << vertx.eventBus().<JsonObject>consumer (getAddress(), this::executeAction )
+        String address = getAddress().address
+        Vertx vertx  = getVertx()
+        _vertx = getVertx()
+        assert vertx
+
+        consumers << getVertx().eventBus().<JsonObject>consumer (address, this::executeAction )
         status = ActorState.Running
 
         promise?.complete()
-        promise.future()
+        promise?.future()
     }
 
-    Future<Void> stop (Promise<Void> promise) {
-        log.debug "stop: # of consumers registered on address [$address] is currently ${consumers.size()},  unregister all the listeners "
+    void stop (Promise<Void> promise) {
+        log.debug "stop: # of consumers registered on address [${getAddress().address}] is currently ${consumers.size()},  unregister all the listeners "
 
         consumers.each {it.unregister()}
         consumers.clear()
         status = ActorState.Stopped
 
         promise?.complete()
-        promise.future()
+        promise?.future()
 
     }
 
-
+    /*
+     * add a consumer for events on the bus
+     */
     MessageConsumer addConsumer (Address from, Handler<Message<Object>> consumer) {
         log.debug "added Handler as listener on specified adrress ${from.address}"
-        MessageConsumer mc = vertx.eventBus().consumer (from.address, consumer) //consumer as Closure)
+        MessageConsumer mc = getVertx().eventBus().consumer (from.address, consumer) //consumer as Closure)
         consumers << mc
         mc
     }
 
     MessageConsumer addConsumer ( Handler<Message<Object>> consumer) {
         log.debug "added Handler as listener on address ${getAddress()}"
-        MessageConsumer mc = vertx.eventBus().consumer (this::getAddress(), consumer)
+        MessageConsumer mc = getVertx().eventBus().consumer (this::getAddress(), consumer)
         consumers << mc
         mc
     }
 
     MessageConsumer addConsumer ( Closure<Message<Object>> consumer) {
         log.debug "added Closure as listener on address ${getAddress()}"
-        MessageConsumer mc = vertx.eventBus().consumer (this::getAddress(), consumer)
+        MessageConsumer mc = getVertx().eventBus().consumer (this::getAddress(), consumer)
         consumers << mc
         mc
     }
@@ -135,7 +141,8 @@ trait ActorTrait {
     MessageConsumer addConsumer ( MethodClosure consumer) {
         log.debug "added MethodClosure as listener on address ${getAddress()}"
 
-        MessageConsumer mc = vertx.eventBus().consumer (this::getAddress(), consumer)
+        def vertx = getVertx()
+        MessageConsumer mc = getVertx().eventBus().consumer (this::getAddress(), consumer)
         consumers << mc
         mc
     }
@@ -168,7 +175,7 @@ trait ActorTrait {
      * @param code
      */
     Future run (code) {
-        Context ctx = vertx.getOrCreateContext()
+        Context ctx = getVertx().getOrCreateContext()
         Future future = ctx.executeBlocking(code)
 
         future.onComplete({ arg ->
@@ -200,7 +207,7 @@ trait ActorTrait {
         JsonObject argsMessage = new JsonObject()
         argsMessage.put("args", args)
 
-        vertx.eventBus().send(address, argsMessage, options ?: new DeliveryOptions())
+        getVertx().eventBus().send(address, argsMessage, options ?: new DeliveryOptions())
         this
     }
 
@@ -215,7 +222,7 @@ trait ActorTrait {
         JsonObject argsMessage = new JsonObject()
         argsMessage.put("args", args)
 
-        vertx.eventBus().publish (postTo.address, argsMessage, options ?: new DeliveryOptions())
+        getVertx().eventBus().publish (postTo.address, argsMessage, options ?: new DeliveryOptions())
         this
     }
 
@@ -238,7 +245,7 @@ trait ActorTrait {
         // see also https://github.com/vert-x3/wiki/wiki/RFC:-Future-API
 
         //use new promise/future model - resuest is expecting a message.reply()
-        Future response = vertx.eventBus().request(address.address, argsMessage, options ?: new DeliveryOptions())
+        Future response = getVertx().eventBus().request(address.address, argsMessage, options ?: new DeliveryOptions())
 
         //get response and add to blocking Queue
         response.onComplete(ar -> {
@@ -272,7 +279,7 @@ trait ActorTrait {
         // see also https://github.com/vert-x3/wiki/wiki/RFC:-Future-API
 
         //use new promise/future model - resuest is expecting a message.reply()
-        Future response = vertx.eventBus().request(address.address, argsMessage, options ?: new DeliveryOptions())
+        Future response = getVertx().eventBus().request(address.address, argsMessage, options ?: new DeliveryOptions())
 
     }
 
@@ -295,9 +302,10 @@ trait ActorTrait {
         Closure schWork = scheduledWork.clone()
         schWork.delegate = this
 
+        //dont use blocking code for schWork
         Closure schWorkWithPromise = { promise.complete(schWork ()) }
 
-        Timer timer = new Timer (tid: vertx.setTimer(delay, schWorkWithPromise ))
+        Timer timer = new Timer (tid: getVertx().setTimer(delay, schWorkWithPromise ))
         timer.future = promise.future()
         timer
     }
@@ -321,7 +329,7 @@ trait ActorTrait {
         schWork.delegate = this
 
         //todo this may not work with repeated timer ticks
-        Timer timer = new Timer (tid:vertx.setPeriodic (delay, schWork))
+        Timer timer = new Timer (tid:getVertx().setPeriodic (delay, schWork))
         timer.future = promise.future()
         timer
     }

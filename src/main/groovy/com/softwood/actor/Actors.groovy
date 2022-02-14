@@ -2,6 +2,7 @@ package com.softwood.actor
 
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Prototype
+import io.micronaut.context.annotation.Value
 import io.vertx.core.Vertx
 import io.vertx.core.Verticle
 import io.vertx.core.Future
@@ -27,6 +28,9 @@ class Actors<T> {
      */
     //constructor injection here
     @Inject Actors (@Named("Vertx") Future<Vertx> future) {
+        log.debug "Actors constructor: injected future $future"
+        println "future was " + future
+        
         if (!futureServer) {
             futureServer = future
             assert futureServer.isComplete()
@@ -61,6 +65,36 @@ class Actors<T> {
     static addDeployedActor (Actor actor) {
         deployedActors.putIfAbsent (actor.deploymentId, actor)
     }
+
+    static MyActor myActor (String name, Closure action=null) {
+
+        MyActor actor
+        actor = new MyActor (name:name)
+
+        Verticle v = actor as Verticle
+
+        //Vertx vertx = Vertx.vertx()  //no injection here just grab one for now
+
+        //deploy this specific verticle instance
+        vertx.deployVerticle(v, {ar ->
+            if (ar.succeeded()) {
+                actor.deploymentId = ar.result()
+                addDeployedActor(actor)
+                actor.status = ActorState.Running
+
+
+                log.debug ("Actors.actor(): started verticle $this successfully and got deploymentId ${ar.result()}")
+
+                //whoopee
+            } else {
+                log.debug ("Actors.actor(): deployVerticle $this encountered a problem ${ar.cause().message}")
+            }
+        })
+
+        actor
+
+    }
+
     /**
      * actor with name and optional action closure , automatically returns a started actor
      * @param String name, can be null
