@@ -1,10 +1,9 @@
 
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder
+import com.softwood.util.loggingConfiguration.HighlightingCompositeConverter
 import org.fusesource.jansi.internal.Kernel32
 
 import static ch.qos.logback.classic.Level.*
-import static org.fusesource.jansi.Ansi.Color.*
-
 import static org.fusesource.jansi.internal.Kernel32.GetStdHandle
 import static org.fusesource.jansi.internal.Kernel32.STD_OUTPUT_HANDLE
 
@@ -15,7 +14,7 @@ import static org.fusesource.jansi.internal.Kernel32.STD_OUTPUT_HANDLE
 
 def appenderList = ["PlainConsole"]
 
-conversionRule("highlight", util.loggingConfiguration.HighlightingCompositeConverter)
+conversionRule("highlight", HighlightingCompositeConverter)
 
 final int VIRTUAL_TERMINAL_PROCESSING = 0x0004
 long console = GetStdHandle(STD_OUTPUT_HANDLE)

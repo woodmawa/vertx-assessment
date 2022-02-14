@@ -1,17 +1,13 @@
 package ioc
 
-import actor.Actor
-import actor.Actors
+import com.softwood.actor.Actor
+import com.softwood.actor.Actors
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.env.Environment
 import io.micronaut.inject.qualifiers.Qualifiers
 import io.vertx.core.AsyncResult
 import io.vertx.core.Future
 import io.vertx.core.Vertx
-import jakarta.inject.Qualifier
-import java.lang.annotation.Retention
-import java.lang.annotation.RetentionPolicy
-
 
 class Application {
 

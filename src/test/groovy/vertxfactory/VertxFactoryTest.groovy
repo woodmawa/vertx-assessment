@@ -1,14 +1,13 @@
 package vertxfactory
 
+import com.softwood.vertxfactory.VertxFactory
 import io.micronaut.context.ApplicationContext
-import io.micronaut.core.type.Argument
 import io.micronaut.inject.qualifiers.Qualifiers
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import jakarta.inject.Inject
 import jakarta.inject.Named
-import jakarta.inject.Qualifier
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.util.concurrent.AsyncConditions

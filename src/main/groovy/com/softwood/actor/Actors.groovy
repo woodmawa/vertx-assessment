@@ -1,20 +1,15 @@
-package actor
+package com.softwood.actor
 
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Prototype
-import io.micronaut.context.annotation.Requires
-import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import io.vertx.core.Verticle
-import io.vertx.core.VertxOptions
 import io.vertx.core.Future
 
 import io.micronaut.context.annotation.Bean
 import io.micronaut.context.annotation.Factory
 import jakarta.inject.Inject
 import jakarta.inject.Named
-import vertxfactory.ClusteredStartupCondition
-import vertxfactory.LocalStartupCondition
 
 import java.util.concurrent.ConcurrentHashMap
 

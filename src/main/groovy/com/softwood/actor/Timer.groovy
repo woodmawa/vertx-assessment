@@ -1,12 +1,8 @@
-package actor
+package com.softwood.actor
 
 import groovy.transform.MapConstructor
 import io.vertx.core.Future
-import io.vertx.core.Vertx
-import jakarta.inject.Inject
-import jakarta.inject.Named
 
-import java.time.Duration
 import java.util.concurrent.CompletionStage
 
 @MapConstructor

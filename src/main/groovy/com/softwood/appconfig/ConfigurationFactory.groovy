@@ -1,4 +1,4 @@
-package appconfig
+package com.softwood.appconfig
 
 import groovy.util.logging.Slf4j
 import groovy.yaml.YamlSlurper

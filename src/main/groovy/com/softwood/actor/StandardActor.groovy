@@ -1,16 +1,14 @@
-package actor
+package com.softwood.actor
 
 import groovy.util.logging.Slf4j
 import io.micronaut.context.annotation.Prototype
 import io.vertx.core.AbstractVerticle
-import io.vertx.core.AsyncResult
 import io.vertx.core.Context
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
-import io.vertx.core.eventbus.EventBus
 import io.vertx.core.eventbus.Message
 import io.vertx.core.eventbus.MessageConsumer
 import io.vertx.core.json.JsonArray
@@ -22,7 +20,6 @@ import javax.validation.constraints.NotNull
 import java.time.Duration
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
-import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Supplier
 import java.util.stream.Stream
@@ -32,7 +29,6 @@ import java.util.stream.Stream
 class StandardActor extends AbstractVerticle implements Actor {
 
     private Optional<String> name = Optional.of ("${getClass().simpleName}@${Integer.toHexString(System.identityHashCode(this)) }")
-    //private address = "actor.${->getName()}".toString()
     private String deploymentId = ""
     private ActorState status = ActorState.Created
 

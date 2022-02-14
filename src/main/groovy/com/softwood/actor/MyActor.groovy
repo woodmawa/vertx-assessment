@@ -1,7 +1,6 @@
-package actor
+package com.softwood.actor
 
 import groovy.transform.InheritConstructors
-import io.micronaut.context.annotation.Prototype
 
 @InheritConstructors
 class MyActor extends StandardActor {

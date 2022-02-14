@@ -1,8 +1,7 @@
 package vertxfactory
 
-import actor.Actor
-import actor.Actors
-import actor.Address
+import com.softwood.actor.Actor
+import com.softwood.actor.Actors
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.vertx.core.json.JsonObject
 import jakarta.inject.Inject

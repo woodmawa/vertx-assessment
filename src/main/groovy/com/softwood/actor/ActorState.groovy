@@ -1,4 +1,4 @@
-package actor
+package com.softwood.actor
 
 enum ActorState {
     Running,

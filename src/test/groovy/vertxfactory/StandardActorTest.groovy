@@ -1,14 +1,13 @@
 package vertxfactory
 
-import actor.Actor
-import actor.ActorState
-import actor.Actors
+import com.softwood.actor.Actor
+import com.softwood.actor.ActorState
+import com.softwood.actor.Actors
 import io.micronaut.context.ApplicationContext
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.vertx.core.Context
 import io.vertx.core.Future
 import io.vertx.core.Vertx
-import io.vertx.core.eventbus.EventBus
 import io.vertx.junit5.VertxTestContext
 import jakarta.inject.Inject
 import spock.lang.Specification

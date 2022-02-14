@@ -1,4 +1,4 @@
-package actor
+package com.softwood.actor
 
 import groovy.transform.Immutable
 

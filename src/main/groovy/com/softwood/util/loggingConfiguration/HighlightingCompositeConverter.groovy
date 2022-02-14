@@ -1,4 +1,4 @@
-package util.loggingConfiguration
+package com.softwood.util.loggingConfiguration
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.spi.ILoggingEvent

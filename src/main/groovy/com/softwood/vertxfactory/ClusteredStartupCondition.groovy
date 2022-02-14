@@ -1,4 +1,4 @@
-package vertxfactory
+package com.softwood.vertxfactory
 
 import groovy.util.logging.Slf4j
 import io.micronaut.context.ApplicationContext

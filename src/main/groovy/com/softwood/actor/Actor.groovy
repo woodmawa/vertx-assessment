@@ -1,4 +1,4 @@
-package actor
+package com.softwood.actor
 
 import io.vertx.core.Future
 import io.vertx.core.Handler

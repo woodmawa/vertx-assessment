@@ -1,6 +1,6 @@
 package ioc
 
-import actor.Actor
+import com.softwood.actor.Actor
 import io.micronaut.context.ApplicationContext
 
 import jakarta.inject.Inject
