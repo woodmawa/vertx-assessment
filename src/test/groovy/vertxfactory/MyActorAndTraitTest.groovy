@@ -123,7 +123,6 @@ class MyActorAndTraitTest extends Specification {
         then:
         conditions.within(4) {
             res == "hello william"
-
         }
     }
 }
