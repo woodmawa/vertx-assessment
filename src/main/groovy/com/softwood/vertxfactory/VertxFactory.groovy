@@ -24,48 +24,52 @@ class VertxFactory {
 
     static Vertx vertx
     static Future<Vertx> futureServer
-    static ServerMode serverMode = ServerMode.indeterminate
+    static ServerMode serverMode = ServerMode.Indeterminate
 
     /*
      * incase in clustered mode we have to check if the future succeeded or not
      * if not complete yet - just return the pending future
      */
-    //@Bean
-    //@Requires(beans=[Future<Vertx>])
+    static Optional<Vertx> vertx() {
+        ApplicationContext ctx = ApplicationContext.run()
+        vertx(ctx)
+    }
+
     static Optional<Vertx> vertx(ApplicationContext ctx) {
 
         //force lookup to generate the bean
         Future<Vertx> fv = ctx.getBean (Future<Vertx>,Qualifiers.byName("Vertx"))
+        ConfigObject appConf = ctx.getBean (ConfigObject)
 
-        if (futureServer == null && vertx == null) {
-            throw new ExceptionInInitializerError("Actors context has not been initialised, use localInit() or clusteredInit() first  ")
-        } else if (futureServer.isComplete()){
+        if (futureServer == null) {
+            futureServer = fv
+        }
+
+         if (futureServer.isComplete()){
             if (futureServer.succeeded()) {
                 //ok to return the vertx
+                if (appConf.actor.framework.serverMode == 'local')
+                    serverMode = ServerMode.Local
                 return Optional.of (vertx)
             } else (futureServer.failed()) {
+                serverMode = ServerMode.Indeterminate
                 //if failed return the cause
                 log.error ("clustered vertx failed to start successfully, ${futureServer.cause().message} ")
                 return Optional.empty()
             }
-        } else {
+         } else {
             Future fut = futureServer.onComplete { ar -> Optional.of(ar.result()) }
                     .onFailure { println "failed ${it.cause().message}" }
-            Optional.ofNullable(fut.otherwise(void))
-        }
+            Optional.ofNullable(fut.otherwise(null))
+         }
     }
 
-    static Optional<Vertx> vertx() {
-        if (futureServer?.isComplete())
-            Optional.ofNullable(vertx)
-        else
-            Optional.empty()
-    }
+
 
     //shutdown hook when the vertx is closed
     static void vertxShutdown() {
         log.info "vertxShutdown: responding to vertx closure "
-        serverMode = ServerMode.indeterminate
+        serverMode = ServerMode.Shutdown
     }
 
     //micronaught expects instance methods when using the StartupCondition as shown
@@ -88,15 +92,15 @@ class VertxFactory {
         //this takes some time to start - dont block and wait for callback
         Vertx.clusteredVertx(clusterOptions, ar -> {
             if (ar.succeeded()) {
-                 vertx = ar.result()
+                vertx = ar.result()
                 vertx.addShutdownHook (this::vertxShutdown)
 
                 clusterStartPromise.complete(vertx)
-                serverMode = ServerMode.clustered
+                serverMode = ServerMode.Clustered
                 log.info ("clusterInit: clustered vertx started successfully")
             } else {
+                clusterStartPromise.fail(ar.cause())
                 log.error("clusterInit: couldn't start clustered vertx, reason : ${ar.cause().message}")
-                clusterStartPromise.fail(new RuntimeException("clusteredVertx failed to start with ${ar.cause().message}"))
             }
         })
 
@@ -123,7 +127,7 @@ class VertxFactory {
         vertx.addShutdownHook (this::vertxShutdown)
 
         startPromise.complete(vertx)
-        serverMode = ServerMode.local
+        serverMode = ServerMode.Local
 
         log.info ("localInit: local vertx started successfully")
 
@@ -133,7 +137,8 @@ class VertxFactory {
 }
 
 enum ServerMode {
-    local,
-    clustered,
-    indeterminate
+    Local,
+    Clustered,
+    Shutdown,
+    Indeterminate
 }

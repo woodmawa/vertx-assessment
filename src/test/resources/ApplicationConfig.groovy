@@ -1,7 +1,7 @@
 environment = "unitTest"  // default from {unitTest|integrationTest}
 
 
-framework {
+actor.framework {
     serverMode = "local"
     vertxOptions {
 
@@ -11,18 +11,18 @@ framework {
 //config slurper will update framework from any matched environment in constructor call
 environments {
     development {
-        framework.serverMode = "local" // choice of {local|clustered}
-        framework.vertxOptions = [:]
+        actor.framework.serverMode = "local" // choice of {local|clustered}
+        actor.framework.vertxOptions = [:]
 
     }
     test {
-        framework.serverMode = "local" // choice of {local|clustered}
-        framework.vertxOptions = [:]
+        actor.framework.serverMode = "local" // choice of {local|clustered}
+        actor.framework.vertxOptions = [:]
 
     }
     production {
-        framework.serverMode = "clustered" // choice of {local|clustered}
-        framework.vertxOptions = [:]
+        actor.framework.serverMode = "clustered" // choice of {local|clustered}
+        actor.framework.vertxOptions = [:]
 
     }
 }

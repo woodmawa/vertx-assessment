@@ -1,5 +1,6 @@
 package vertxfactory
 
+import com.softwood.actor.ActorState
 import com.softwood.actor.Actors
 import com.softwood.actor.MyActor
 import com.softwood.vertxfactory.VertxFactory
@@ -53,24 +54,20 @@ class MyActorAndTraitTest extends Specification {
         setup:
         def conditions = new PollingConditions(timeout: 10)
         MyActor actor
-        def actors = Actors::new()  //forces constructor injection
 
         when:
-        conditions.within (2) {
-            assert Actors.vertx
-            actor = Actors.myActor("will")
+        actor = Actors.myActor("will")
 
-        }
 
         then:
-        conditions.within(4) {
+        conditions.within(2) {
 
             actor.name == "will"
             actor.deploymentId != ""
-            //actor.vertx == Actors.vertx
-            //Actors.vertx.isClustered() == false
+            actor.vertx == Actors.vertx
+            Actors.vertx.isClustered() == false
+            actor.status == ActorState.Running
         }
-
 
     }
 
