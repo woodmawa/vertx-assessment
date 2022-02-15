@@ -50,7 +50,7 @@ class ClusteredStartupCondition implements Condition{
         if (beanContext instanceof ApplicationContext) {
 
 
-            String startupMode = appConfig.framework.serverMode
+            String startupMode = appConfig.actor.framework.serverMode
             if (startupMode) {
                 if (startupMode == 'clustered') {
                     log.debug "clusteredStartup matches with startup mode 'clustered', return true  "

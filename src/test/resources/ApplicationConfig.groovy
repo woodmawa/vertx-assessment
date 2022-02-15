@@ -1,10 +1,12 @@
 environment = "unitTest"  // default from {unitTest|integrationTest}
 
 
-actor.framework {
-    serverMode = "local"
-    vertxOptions {
+actor{
+    framework {
+        serverMode = "local"
+        vertxOptions {
 
+        }
     }
 }
 

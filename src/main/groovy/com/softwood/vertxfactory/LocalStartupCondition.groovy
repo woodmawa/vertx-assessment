@@ -45,7 +45,7 @@ class LocalStartupCondition implements Condition{
         if (beanContext instanceof ApplicationContext) {
 
 
-            String startupMode = appConfig.framework.serverMode
+            String startupMode = appConfig.actor.framework.serverMode
             if (startupMode) {
                 if (startupMode == 'local') {
                     log.debug "localStartup matches with startup mode 'local', return true  "

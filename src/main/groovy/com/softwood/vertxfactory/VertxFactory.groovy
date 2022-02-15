@@ -15,6 +15,12 @@ import jakarta.inject.Inject
 import jakarta.inject.Named
 import jakarta.inject.Singleton
 
+/**
+ * factory class to conditionally generate either a local, or clustered
+ * vertx based on env state
+ * this is used by the Actors vertx for creating new actors
+ *
+ */
 @Factory
 @Slf4j
 class VertxFactory {
@@ -77,7 +83,7 @@ class VertxFactory {
         serverMode = ServerMode.Shutdown
         Closure closWork = closing.clone()
         closWork.delegate = this
-        
+
         closWork()
     }
 

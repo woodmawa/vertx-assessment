@@ -1,9 +1,11 @@
 
 
-actor.framework {
-    serverMode = "local"
-    vertxOptions {
+actor{
+    framework {
+        serverMode = "local"
+        vertxOptions {
 
+        }
     }
 }
 
