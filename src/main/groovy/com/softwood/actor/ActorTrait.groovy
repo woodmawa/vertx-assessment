@@ -54,7 +54,7 @@ trait ActorTrait implements Verticle {
 
     void setName (@NotNull String name) {
         //need to reset the listener to new change of address
-        log.debug "setName: number of listeners is ${consumers.size()}"
+        log.debug "setName: number of listeners is currently  ${consumers.size()}"
         MessageConsumer defaultConsumer = consumers.find{mc ->
             log.debug "setName: checking existing consumers for default listener"
             String defaultAddress = "actor.${owner.getClass().simpleName}@${Integer.toHexString(System.identityHashCode(this)) }".toString()
@@ -68,7 +68,7 @@ trait ActorTrait implements Verticle {
         if (getVertx())
             addConsumer(this::executeAction)
         else {
-            log.info "changed name of actor to ${getName()} to verticle is not yet deployed "
+            log.info "changed name of actor to [${getName()}] to this verticle, but it is not yet deployed "
         }
 
     }
@@ -76,6 +76,7 @@ trait ActorTrait implements Verticle {
     Closure getAction () {_action}
 
     void setAction (@NotNull Closure work) {
+        log.debug "just updating the action closure for actor [${getName()}] "
         _action = work.clone()
         _action.delegate = this
 
@@ -126,14 +127,14 @@ trait ActorTrait implements Verticle {
 
     MessageConsumer addConsumer ( Handler<Message<Object>> consumer) {
         log.debug "added Handler as listener on address ${getAddress()}"
-        MessageConsumer mc = getVertx().eventBus().consumer (this::getAddress(), consumer)
+        MessageConsumer mc = getVertx().eventBus().consumer (this::getAddress().address, consumer)
         consumers << mc
         mc
     }
 
     MessageConsumer addConsumer ( Closure<Message<Object>> consumer) {
         log.debug "added Closure as listener on address ${getAddress()}"
-        MessageConsumer mc = getVertx().eventBus().consumer (this::getAddress(), consumer)
+        MessageConsumer mc = getVertx().eventBus().consumer (this::getAddress().address, consumer)
         consumers << mc
         mc
     }
@@ -142,7 +143,7 @@ trait ActorTrait implements Verticle {
         log.debug "added MethodClosure as listener on address ${getAddress()}"
 
         def vertx = getVertx()
-        MessageConsumer mc = getVertx().eventBus().consumer (this::getAddress(), consumer)
+        MessageConsumer mc = getVertx().eventBus().consumer (this::getAddress().address, consumer)
         consumers << mc
         mc
     }
@@ -157,7 +158,7 @@ trait ActorTrait implements Verticle {
     }
 
     boolean removeAllConsumersFromAddress (String address) {
-        log.debug "removedAll listeners from address ${getAddress()}"
+        log.debug "removedAll listeners from address ${getAddress().address}"
 
         def matched = consumers.findAll {it.address() == address}
         matched.each {it.unregister()}
@@ -207,7 +208,7 @@ trait ActorTrait implements Verticle {
         JsonObject argsMessage = new JsonObject()
         argsMessage.put("args", args)
 
-        getVertx().eventBus().send(address, argsMessage, options ?: new DeliveryOptions())
+        getVertx().eventBus().send(sendTo.address, argsMessage, options ?: new DeliveryOptions())
         this
     }
 
@@ -234,7 +235,7 @@ trait ActorTrait implements Verticle {
         requestAndReply(actor.address, args, options)
     }
 
-    def requestAndReply(Address address,  args, DeliveryOptions options = null) {
+    def requestAndReply(Address requestAddress,  args, DeliveryOptions options = null) {
         log.debug ("request&reply: [$args] sent to [${address.address}]")
 
         BlockingQueue results = new LinkedBlockingQueue()
@@ -245,7 +246,7 @@ trait ActorTrait implements Verticle {
         // see also https://github.com/vert-x3/wiki/wiki/RFC:-Future-API
 
         //use new promise/future model - resuest is expecting a message.reply()
-        Future response = getVertx().eventBus().request(address.address, argsMessage, options ?: new DeliveryOptions())
+        Future response = getVertx().eventBus().request(requestAddress.address, argsMessage, options ?: new DeliveryOptions())
 
         //get response and add to blocking Queue
         response.onComplete(ar -> {
@@ -269,9 +270,9 @@ trait ActorTrait implements Verticle {
         requestAndAsyncReply (actor.address, args, options)
     }
 
-    Future requestAndAsyncReply (Address address, args, DeliveryOptions options = null) {
+    Future requestAndAsyncReply (Address requestAddress, args, DeliveryOptions options = null) {
         //requestAndAsyncReply (address.address, args, options)
-        log.debug ("request&asyncReply: [$args] sent to [${address.address}]")
+        log.debug ("request&asyncReply: [$args] sent to [${requestAddress.address}]")
 
         //wrap args in jsonObject
         JsonObject argsMessage = new JsonObject()
@@ -279,7 +280,7 @@ trait ActorTrait implements Verticle {
         // see also https://github.com/vert-x3/wiki/wiki/RFC:-Future-API
 
         //use new promise/future model - resuest is expecting a message.reply()
-        Future response = getVertx().eventBus().request(address.address, argsMessage, options ?: new DeliveryOptions())
+        Future response = getVertx().eventBus().request(requestAddress.address, argsMessage, options ?: new DeliveryOptions())
 
     }
 
