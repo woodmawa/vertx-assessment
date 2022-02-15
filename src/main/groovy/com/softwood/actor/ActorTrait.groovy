@@ -196,11 +196,11 @@ trait ActorTrait implements Verticle {
     /*
      * point to point send message to address
      */
-    Actor send (Actor anotherActor, args, DeliveryOptions options = null) {
+    MyActor send (ActorTrait anotherActor, args, DeliveryOptions options = null) {
         send (anotherActor.address, args, options)
     }
 
-    Actor send (Address sendTo, args, DeliveryOptions options = null) {
+    MyActor send (Address sendTo, args, DeliveryOptions options = null) {
         //send (postTo.address, args, options)
         log.debug ("send: [$args] sent to [${sendTo.address}]")
 
@@ -215,11 +215,11 @@ trait ActorTrait implements Verticle {
     /*
      * pub-sub: - publish to some address
      */
-    Actor publish (Actor actor, def args, DeliveryOptions options=null) {
+    MyActor publish (ActorTrait actor, def args, DeliveryOptions options=null) {
         publish (actor.address, args, options)
     }
 
-    Actor publish (Address postTo, def args, DeliveryOptions options=null) {
+    MyActor publish (Address postTo, def args, DeliveryOptions options=null) {
         JsonObject argsMessage = new JsonObject()
         argsMessage.put("args", args)
 
@@ -386,18 +386,23 @@ trait ActorTrait implements Verticle {
                 .onComplete(ar -> {
                     JsonObject json = new JsonObject()
                     if (ar.succeeded()) {
-                        if (message.replyAddress() && message.isSend()) {
+                        if (message.isSend() && message.replyAddress()  ) {
                             def result = ar.result()
-                            json.put("reply", result.toString())
 
-                            message.reply (json)
-                            log.debug("executeAction(): replying with  [$json] to reply@: ${message.replyAddress()}, orig message sent to ${message.address()}, isSend() : ${message.isSend()}")
+                            if (message.replyAddress()) {
+                                json.put("reply", result.toString())
+
+                                message.reply(json)
+                                log.debug("executeAction(): replying with  [$json] to reply@: ${message.replyAddress()}, orig message sent to ${message.address()}, isSend() : ${message.isSend()}")
+                            } else {
+                                log.debug("executeAction(): no reply address provided, orig message sent to ${message.address()}, isSend() : ${message.isSend()}")
+                            }
 
                         } else  {
                             def result = ar.result()
-                            json.put("no return, with", result.toString())
+                            json.put("pub-sub message output", result.toString())
 
-                            log.debug("executeAction(): got  [$json] from action()  and reply@: ${message.replyAddress()}, orig message sent to ${message.address()}, isSend() : ${message.isSend()}")
+                            log.debug("executeAction(): received async publish message, got  [$json] from action(), orig message sent to ${message.address()}")
 
                         }
                     } else {

@@ -71,5 +71,60 @@ class MyActorAndTraitTest extends Specification {
 
     }
 
+    def "check self actor " () {
+        setup:
+        def conditions = new PollingConditions(timeout: 10)
+        MyActor actor
+
+        when:
+        actor = Actors.myActor("will")
+
+        then:
+        actor.self === actor
+
+    }
+
+    def "process message sent to self " () {
+        setup:
+        def conditions = new PollingConditions(timeout: 10)
+        MyActor actor
+        def res = ""
+
+        when:
+        actor = Actors.myActor("will")
+        actor.action = {res = "$it"; println "processed $it";  it}
+
+        actor.send (actor.self, "hello william")
+
+        then:
+        conditions.within(4) {
+            res == "hello william"
+
+        }
+    }
+
+    def "pub sub message from one actor to another " () {
+
+        setup:
+        def conditions = new PollingConditions(timeout: 10)
+        MyActor actorWill, actorMaz
+        def res = ""
+
+        when:
+        actorWill  = Actors.myActor("will")
+
+        actorMaz  = Actors.myActor("maz")
+        actorMaz.action = {res = "$it"; println "processed $it";  it}
+
+        conditions.within (1) {
+            actorWill.publish(actorMaz, "hello william")
+        }
+
+        then:
+        conditions.within(4) {
+            res == "hello william"
+
+        }
+    }
 }
 

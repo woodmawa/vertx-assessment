@@ -89,6 +89,11 @@ class Actors<T> {
         vertx.deploymentIDs().collect()
     }
 
+    //todo - need to get types sorted to make this easier
+    static findDeployedActorByName (String name) {
+        deployedActors.elements().find {it.getName() == name}
+    }
+
     static void removeDeployedActor (Actor actor) {
         vertx.undeploy(actor.deploymentId) {ar ->
             if (ar.succeeded()){
@@ -110,8 +115,6 @@ class Actors<T> {
         actor = new MyActor (name:name)
 
         Verticle v = actor as Verticle
-
-        //Vertx vertx = Vertx.vertx()  //no injection here just grab one for now
 
         //deploy this specific verticle instance
         vertx.deployVerticle(v, {ar ->
