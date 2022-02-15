@@ -83,29 +83,31 @@ class Actors<T> {
         }
     }
 
-    static HashMap deployedActors = new ConcurrentHashMap<>()
+    static HashMap<String, ?> deployedActors = new ConcurrentHashMap<>()
 
     static List<String> activeActors () {
         vertx.deploymentIDs().collect()
     }
 
     //todo - need to get types sorted to make this easier
-    static findDeployedActorByName (String name) {
-        deployedActors.elements().find {it.getName() == name}
+    static List findDeployedActorsByName (String name) {
+        List actors = deployedActors.values().toList()
+
+        def actor = actors.findAll {it.getName() == name}
     }
 
     static void removeDeployedActor (Actor actor) {
         vertx.undeploy(actor.deploymentId) {ar ->
             if (ar.succeeded()){
                 log.info "successfully undeployed ${actor.name}"
+                deployedActors.remove(actor.deploymentId)
             } else {
                 log.error "failed to undeploy ${actor.name}, reason : " + ar.cause()
             }
         }
-        deployedActors.remove(actor.deploymentId)
     }
 
-    static addDeployedActor (Actor actor) {
+    static void addDeployedActor (MyActor actor) {
         deployedActors.putIfAbsent (actor.deploymentId, actor)
     }
 
@@ -120,13 +122,12 @@ class Actors<T> {
         vertx.deployVerticle(v, {ar ->
             if (ar.succeeded()) {
                 actor.deploymentId = ar.result()
+
                 addDeployedActor(actor)
                 actor.status = ActorState.Running
 
-
                 log.debug ("Actors.actor(): started verticle $this successfully and got deploymentId ${ar.result()}")
 
-                //whoopee
             } else {
                 log.debug ("Actors.actor(): deployVerticle $this encountered a problem ${ar.cause().message}")
             }
@@ -255,11 +256,13 @@ class Actors<T> {
         vertx = null
     }
 
-    static undeploy (Actor actor) {
+    static undeploy (MyActor actor) {
         vertx.undeploy(actor.deploymentId) {ar ->
             if (ar.succeeded()) {
                 log.debug "undeployed actor $actor.name with deploymentId $actor.deploymentId"
-                Actors.undeploy(actor )
+                actor.setStatus ( ActorState.Stopped )
+                actor.setDeploymentId("")
+                actor.removeConsumer (actor.getSelfConsumer())
             } else {
                 log.error ("couldn't undeploy $actor.name with deploymentId [$actor.deploymentId]")
             }

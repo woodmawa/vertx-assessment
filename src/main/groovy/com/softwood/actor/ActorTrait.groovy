@@ -1,5 +1,6 @@
 package com.softwood.actor
 
+import groovy.transform.ToString
 import groovy.util.logging.Slf4j
 import io.vertx.core.Context
 import io.vertx.core.Future
@@ -84,6 +85,14 @@ trait ActorTrait implements Verticle {
 
     def getSelf () {this}
 
+    void setSelfConsumer(MessageConsumer selfConsumer ) {
+        _selfConsumer = selfConsumer
+    }
+
+    MessageConsumer getSelfConsumer () {
+        _selfConsumer
+    }
+
     //verticle start and stop methods - when start is running the deploymentId has not yet been generated
     void start(Promise<Void> promise) {
 
@@ -93,10 +102,10 @@ trait ActorTrait implements Verticle {
         //register the default listener for the default address
         String address = getAddress().address
         Vertx vertx  = getVertx()
-        _vertx = getVertx()
         assert vertx
 
-        consumers << getVertx().eventBus().<JsonObject>consumer (address, this::executeAction )
+        MessageConsumer consumer = getVertx().eventBus().<JsonObject>consumer (address, this::executeAction )
+        setSelfConsumer(consumer)
         status = ActorState.Running
 
         promise?.complete()
@@ -113,6 +122,11 @@ trait ActorTrait implements Verticle {
         promise?.complete()
         promise?.future()
 
+    }
+
+    //remove this actor from running list of Actor.deployedActors
+    void close () {
+        Actors.undeploy(this)
     }
 
     /*
@@ -412,4 +426,7 @@ trait ActorTrait implements Verticle {
                 })
     }
 
+    String toString() {
+        "actor ${this.getClass().name} (${getName()}:[${getDeploymentId()}])"
+    }
 }

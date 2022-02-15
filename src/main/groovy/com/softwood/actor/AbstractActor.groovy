@@ -19,6 +19,7 @@ abstract class AbstractActor extends AbstractVerticle implements Verticle, Actor
     protected Optional<String> _name = Optional.of ("${getClass().simpleName}@${Integer.toHexString(System.identityHashCode(this)) }")
     protected String _deploymentId = ""
     protected List<MessageConsumer> _consumers = []
+    protected MessageConsumer _selfConsumer
     protected Closure _action = { it }  //identity closure
 
 

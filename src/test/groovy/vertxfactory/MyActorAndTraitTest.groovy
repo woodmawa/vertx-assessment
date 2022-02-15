@@ -46,6 +46,7 @@ class MyActorAndTraitTest extends Specification {
             actor.deploymentId = future.result()
             assert future.result() == actor.deploymentId
             assert actor.vertx == vertx
+            actor.close()
         }
 
     }
@@ -67,6 +68,7 @@ class MyActorAndTraitTest extends Specification {
             actor.vertx == Actors.vertx
             Actors.vertx.isClustered() == false
             actor.status == ActorState.Running
+            actor.close()
         }
 
     }
@@ -81,6 +83,7 @@ class MyActorAndTraitTest extends Specification {
 
         then:
         actor.self === actor
+        actor.close()
 
     }
 
@@ -99,7 +102,7 @@ class MyActorAndTraitTest extends Specification {
         then:
         conditions.within(4) {
             res == "hello william"
-
+            actor.close()
         }
     }
 
@@ -109,21 +112,27 @@ class MyActorAndTraitTest extends Specification {
         def conditions = new PollingConditions(timeout: 10)
         MyActor actorWill, actorMaz
         def res = ""
+        def depActors
 
         when:
         actorWill  = Actors.myActor("will")
 
         actorMaz  = Actors.myActor("maz")
-        actorMaz.action = {res = "$it"; println "processed $it";  it}
+        actorMaz.action = {res = "$it";  it}
+
 
         conditions.within (1) {
-            actorWill.publish(actorMaz, "hello william")
+            actorWill.publish (actorMaz, "hello william")
         }
 
         then:
         conditions.within(4) {
             res == "hello william"
+            depActors = Actors.findDeployedActorsByName("will")
+            assert depActors.contains(actorWill)
+
         }
+        println "actors named 'will' " +depActors
     }
 }
 
