@@ -72,6 +72,15 @@ class VertxFactory {
         serverMode = ServerMode.Shutdown
     }
 
+    static void vertxShutdown(Closure closing) {
+        log.info "vertxShutdown: responding to vertx closure, call closure  "
+        serverMode = ServerMode.Shutdown
+        Closure closWork = closing.clone()
+        closWork.delegate = this
+        
+        closWork()
+    }
+
     //micronaught expects instance methods when using the StartupCondition as shown
     @Bean
     @Singleton
