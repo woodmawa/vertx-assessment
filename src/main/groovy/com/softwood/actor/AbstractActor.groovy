@@ -7,6 +7,14 @@ import io.vertx.core.eventbus.MessageConsumer
 import jakarta.inject.Inject
 import org.codehaus.groovy.runtime.MethodClosure
 
+/**
+ * base class for actors, defines standard fields
+ *
+ * ActorTrait  provides default method implementations for implementing actors
+ *
+ * @Author will woodman
+ * @Date 16-02-2022
+ */
 abstract class AbstractActor extends AbstractVerticle implements Verticle, ActorTrait {
 
 
