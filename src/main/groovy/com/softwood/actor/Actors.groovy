@@ -15,6 +15,14 @@ import jakarta.inject.Named
 
 import java.util.concurrent.ConcurrentHashMap
 
+/**
+ * standard interface spec for base actors capabilities
+ *
+ *
+ * @author Will Woodman
+ * @date 16-02-2022
+ */
+
 @Factory
 @Slf4j
 class Actors<T> {
@@ -50,7 +58,6 @@ class Actors<T> {
     //constructor injection here
     @Inject Actors (@Named("Vertx") Future<Vertx> future) {
         log.debug "Actors constructor: injected future $future"
-        println "future was " + future
 
         if (!futureServer) {
             futureServer = future
@@ -113,10 +120,36 @@ class Actors<T> {
                 addDeployedActor(actor)
                 actor.status = ActorState.Running
 
-                log.debug ("Actors.actor(): started verticle $this successfully and got deploymentId ${ar.result()}")
+                log.debug ("Actors.defaultActor(): started verticle $this successfully and got deploymentId ${ar.result()}")
 
             } else {
-                log.debug ("Actors.actor(): deployVerticle $this encountered a problem ${ar.cause().message}")
+                log.debug ("Actors.defaultActor(): deployVerticle $this encountered a problem ${ar.cause().message}")
+            }
+        })
+
+        actor
+
+    }
+
+    static Actor dynamicDispatchActor(String name, Closure action=null) {
+
+        DynamicDispatchActor actor
+        actor = new DynamicDispatchActor (name:name, dynamicActionClosure:action ?: {it})
+
+        Verticle v = actor as Verticle
+
+        //deploy this specific verticle instance
+        vertx.deployVerticle(v, {ar ->
+            if (ar.succeeded()) {
+                actor.deploymentId = ar.result()
+
+                addDeployedActor(actor)
+                actor.status = ActorState.Running
+
+                log.debug ("Actors.dynamicDispatchActor(): started verticle $this successfully and got deploymentId ${ar.result()}")
+
+            } else {
+                log.debug ("Actors.dynamicDispatchActor(): deployVerticle $this encountered a problem ${ar.cause().message}")
             }
         })
 
@@ -217,11 +250,11 @@ class Actors<T> {
                 addDeployedActor(actor)
                 actor.status = ActorState.Running
 
-                log.debug ("Actors.actor(): started verticle $this successfully and got deploymentId ${ar.result()}")
+                log.debug ("Actors.standardActor(): started verticle $this successfully and got deploymentId ${ar.result()}")
 
                 //whoopee
             } else {
-                log.debug ("Actors.actor(): deployVerticle $this encountered a problem ${ar.cause().message}")
+                log.debug ("Actors.standardActor(): deployVerticle $this encountered a problem ${ar.cause().message}")
             }
         })
 

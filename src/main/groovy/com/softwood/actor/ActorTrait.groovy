@@ -74,7 +74,9 @@ trait ActorTrait implements Verticle, Actor {
 
     }
 
-    Closure getAction () {_action}
+    Closure getAction () {
+        println "abstract action returned "
+        _action}
 
     void setAction (@NotNull Closure work) {
         log.debug "just updating the action closure for actor [${getName()}] "
@@ -385,13 +387,14 @@ trait ActorTrait implements Verticle, Actor {
 
         def args = bodyMap.args
 
+        Closure action = getAction()
+
         //closure that executes the action closure and stores the result in the Promise
         //using a closure as need to reference the args in context, as executeBlocking only passes a Promise as arg
         Closure doBlockingAction = {Promise<Object> promise ->
             try {
                 def result
-                def actDelegate = action.delegate
-                if (action.maximumNumberOfParameters == 0) {
+                 if (action.maximumNumberOfParameters == 0) {
                     result = action()
                 } else if (action.maximumNumberOfParameters == 1) {
                     result = action(args)
