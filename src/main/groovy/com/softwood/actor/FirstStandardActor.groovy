@@ -26,7 +26,7 @@ import java.util.stream.Stream
 
 @Slf4j
 @Prototype
-class StandardActor extends AbstractVerticle implements Actor {
+class FirstStandardActor extends AbstractVerticle implements Actor {
 
     private Optional<String> name = Optional.of ("${getClass().simpleName}@${Integer.toHexString(System.identityHashCode(this)) }")
     private String deploymentId = ""
@@ -107,8 +107,12 @@ class StandardActor extends AbstractVerticle implements Actor {
     MethodClosure action = this::onMessage
 
     //each actor has a default message bus address which is "actor.<name>"
-    String getAddress () {
+    String getAddressString() {
         "actor.${->getName()}".toString()
+    }
+
+    Address getAddress() {
+        new Address (getAddressString())
     }
 
     String getName () {
@@ -133,13 +137,13 @@ class StandardActor extends AbstractVerticle implements Actor {
 
     //constructors
 
-    StandardActor () {}
+    FirstStandardActor() {}
 
-    StandardActor (String name ) {
+    FirstStandardActor(String name ) {
         this.name = Optional.ofNullable(name)
     }
 
-    StandardActor (Closure action) {
+    FirstStandardActor(Closure action) {
         assert action
         Closure clone = (Closure) action.clone()
         clone.delegate = this
@@ -150,7 +154,7 @@ class StandardActor extends AbstractVerticle implements Actor {
         this.action = mc
     }
 
-    StandardActor (String name,  Closure action) {
+    FirstStandardActor(String name, Closure action) {
         assert action
         this.name = Optional.ofNullable(name)
 
@@ -165,7 +169,7 @@ class StandardActor extends AbstractVerticle implements Actor {
    }
 
     // code that takes 1 arg, and returns a result
-    StandardActor (Function actionFunction) {
+    FirstStandardActor(Function actionFunction) {
         assert action
         //todo is this reasonable
 
@@ -176,7 +180,7 @@ class StandardActor extends AbstractVerticle implements Actor {
     }
 
     // code that just returns a result, takes no args
-    StandardActor (Supplier actionAsSupplier) {
+    FirstStandardActor(Supplier actionAsSupplier) {
         assert action
         //todo is this reasonable
 
@@ -233,20 +237,20 @@ class StandardActor extends AbstractVerticle implements Actor {
     //verticle start and stop methods - when start is running the deploymentId has not yet been generated
     void start(Promise<Void> promise) {
 
-        log.debug "start: register listeners on [$address]"
+        log.debug "start: register listeners on [$addressString]"
 
         //see page 56
         //register the default listener for the default address
-        String address = getAddress()
+        String address = getAddressString()
         String called = getName()
-        consumers << vertx.eventBus().<JsonObject>consumer (getAddress(), this::executeAction )
+        consumers << vertx.eventBus().<JsonObject>consumer (getAddressString(), this::executeAction )
         status = ActorState.Running
 
         promise?.complete()
     }
 
     void stop (Promise<Void> promise) {
-        log.debug "stop: # of consumers registered on address [$address] is currently ${consumers.size()},  unregister all the listeners "
+        log.debug "stop: # of consumers registered on address [$addressString] is currently ${consumers.size()},  unregister all the listeners "
 
         consumers.each {it.unregister()}
         consumers.clear()
@@ -264,23 +268,23 @@ class StandardActor extends AbstractVerticle implements Actor {
     }
 
     MessageConsumer addConsumer ( Handler<Message<Object>> consumer) {
-        log.debug "added Handler as listener on address ${getAddress()}"
-        MessageConsumer mc = vertx.eventBus().consumer (this::getAddress(), consumer)
+        log.debug "added Handler as listener on address ${getAddressString()}"
+        MessageConsumer mc = vertx.eventBus().consumer (this::getAddressString(), consumer)
         consumers << mc
         mc
     }
 
     MessageConsumer addConsumer ( Closure<Message<Object>> consumer) {
-        log.debug "added Closure as listener on address ${getAddress()}"
-        MessageConsumer mc = vertx.eventBus().consumer (this::getAddress(), consumer)
+        log.debug "added Closure as listener on address ${getAddressString()}"
+        MessageConsumer mc = vertx.eventBus().consumer (this::getAddressString(), consumer)
         consumers << mc
         mc
     }
 
     MessageConsumer addConsumer ( MethodClosure consumer) {
-        log.debug "added MethodClosure as listener on address ${getAddress()}"
+        log.debug "added MethodClosure as listener on address ${getAddressString()}"
 
-        MessageConsumer mc = vertx.eventBus().consumer (this::getAddress(), consumer)
+        MessageConsumer mc = vertx.eventBus().consumer (this::getAddressString(), consumer)
         consumers << mc
         mc
     }
@@ -295,7 +299,7 @@ class StandardActor extends AbstractVerticle implements Actor {
     }
 
     boolean removeAllConsumersFromAddress (String address) {
-        log.debug "removedAll listeners from address ${getAddress()}"
+        log.debug "removedAll listeners from address ${getAddressString()}"
 
         def matched = consumers.findAll {it.address() == address}
         matched.each {it.unregister()}
@@ -427,7 +431,7 @@ class StandardActor extends AbstractVerticle implements Actor {
      * pub-sub: - publish to some address
      */
     Actor publishToSelf (def args, DeliveryOptions options=null) {
-        publish (this.getAddress(), args, options)
+        publish (this.getAddressString(), args, options)
     }
 
     Actor publish (Actor actor, def args, DeliveryOptions options=null) {
@@ -450,7 +454,7 @@ class StandardActor extends AbstractVerticle implements Actor {
     * request with  response : - publish to some address
     */
     def requestToSelfAndReply (args, DeliveryOptions options = null) {
-        requestAndReply(this.address, args, options)
+        requestAndReply(this.addressString, args, options)
     }
 
     def requestAndReply(Actor actor,  args, DeliveryOptions options = null) {
@@ -481,7 +485,8 @@ class StandardActor extends AbstractVerticle implements Actor {
         })
 
         //blocking wait for result to become available then return it
-        def result = results.take()
+        JsonObject jsonObjectReturn = results.take()
+        jsonObjectReturn.getValue('reply')
     }
 
     /**
@@ -532,7 +537,7 @@ class StandardActor extends AbstractVerticle implements Actor {
 
     // can be chained
     Actor sendToSelf ( args, DeliveryOptions options = null) {
-        send (this.getAddress(), args, options)
+        send (this.getAddressString(), args, options)
     }
 
     Actor send (Actor anotherActor, args, DeliveryOptions options = null) {
@@ -624,5 +629,11 @@ class StandardActor extends AbstractVerticle implements Actor {
         }
 
     }
+
+    //remove this actor from running list of Actor.deployedActors
+    void close () {
+        Actors.undeploy(this)
+    }
+
 
 }

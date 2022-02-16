@@ -2,15 +2,10 @@ package vertxfactory
 
 import com.softwood.actor.ActorState
 import com.softwood.actor.Actors
-import com.softwood.actor.MyActor
+import com.softwood.actor.DefaultActor
 import com.softwood.vertxfactory.VertxFactory
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import io.vertx.core.AbstractVerticle
-import io.vertx.core.Context
-import io.vertx.core.DeploymentOptions
 import io.vertx.core.Future
-import io.vertx.core.Promise
-import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import jakarta.inject.Inject
 import jakarta.inject.Named
@@ -18,7 +13,7 @@ import spock.lang.Specification
 import spock.util.concurrent.PollingConditions
 
 @MicronautTest
-class MyActorAndTraitTest extends Specification {
+class DefaultActorAndTraitTest extends Specification {
 
     @Inject @Named ("Vertx") Future<Vertx> futureServer
 
@@ -27,7 +22,7 @@ class MyActorAndTraitTest extends Specification {
         def conditions = new PollingConditions(timeout: 10)
         Vertx vertx
 
-        MyActor actor = new MyActor()
+        DefaultActor actor = new DefaultActor()
 
         Optional<Vertx> optv = VertxFactory.vertx()
         vertx = optv.get()
@@ -54,10 +49,10 @@ class MyActorAndTraitTest extends Specification {
     def "get MyActor from Actors " () {
         setup:
         def conditions = new PollingConditions(timeout: 10)
-        MyActor actor
+        DefaultActor actor
 
         when:
-        actor = Actors.myActor("will")
+        actor = Actors.defaultActor("will")
 
 
         then:
@@ -76,10 +71,10 @@ class MyActorAndTraitTest extends Specification {
     def "check self actor " () {
         setup:
         def conditions = new PollingConditions(timeout: 10)
-        MyActor actor
+        DefaultActor actor
 
         when:
-        actor = Actors.myActor("will")
+        actor = Actors.defaultActor("will")
 
         then:
         actor.self === actor
@@ -90,11 +85,11 @@ class MyActorAndTraitTest extends Specification {
     def "process message sent to self " () {
         setup:
         def conditions = new PollingConditions(timeout: 10)
-        MyActor actor
+        DefaultActor actor
         def res = ""
 
         when:
-        actor = Actors.myActor("will")
+        actor = Actors.defaultActor("will")
         actor.action = {res = "$it"; println "processed $it";  it}
 
         actor.send (actor.self, "hello william")
@@ -110,14 +105,14 @@ class MyActorAndTraitTest extends Specification {
 
         setup:
         def conditions = new PollingConditions(timeout: 10)
-        MyActor actorWill, actorMaz
+        DefaultActor actorWill, actorMaz
         def res = ""
         def depActors
 
         when:
-        actorWill  = Actors.myActor("will")
+        actorWill  = Actors.defaultActor("will")
 
-        actorMaz  = Actors.myActor("maz")
+        actorMaz  = Actors.defaultActor("maz")
         actorMaz.action = {res = "$it";  it}
 
 

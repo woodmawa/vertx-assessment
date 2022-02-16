@@ -15,7 +15,7 @@ import spock.util.concurrent.AsyncConditions
 import spock.util.concurrent.PollingConditions
 
 @MicronautTest
-class StandardActorTest extends Specification {
+class FirstStandardActorTest extends Specification {
 
     @Inject Actor initiator  //start already been called for inject targets
     @Inject Actor responder
@@ -34,7 +34,7 @@ class StandardActorTest extends Specification {
             assert responder.status == ActorState.Running
             assert Actors.getDeployedActors().size() == 2
          }
-        responder.stop()
+        responder.close()
 
         then:
         conditions.within(5) {
@@ -48,12 +48,15 @@ class StandardActorTest extends Specification {
         setup:
         initiator.name = "will"
         responder.name = "maz"
+        def result
 
         when:
-        initiator.send(responder, "ping")
+        result = initiator.requestAndReply(responder, "ping")
         //responder.reply (initiator, "pong")
 
         then :
+        result
+        result == "ping"  //just returns what was sent
         responder
     }
 

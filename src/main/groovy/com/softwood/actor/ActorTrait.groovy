@@ -23,7 +23,7 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 
 @Slf4j
-trait ActorTrait implements Verticle {
+trait ActorTrait implements Verticle, Actor {
 
     //getVertx() is defined in Verticle interface
 
@@ -210,11 +210,11 @@ trait ActorTrait implements Verticle {
     /*
      * point to point send message to address
      */
-    MyActor send (ActorTrait anotherActor, args, DeliveryOptions options = null) {
+    Actor send (Actor anotherActor, args, DeliveryOptions options = null) {
         send (anotherActor.address, args, options)
     }
 
-    MyActor send (Address sendTo, args, DeliveryOptions options = null) {
+    Actor send (Address sendTo, args, DeliveryOptions options = null) {
         //send (postTo.address, args, options)
         log.debug ("send: [$args] sent to [${sendTo.address}]")
 
@@ -229,16 +229,25 @@ trait ActorTrait implements Verticle {
     /*
      * pub-sub: - publish to some address
      */
-    MyActor publish (ActorTrait actor, def args, DeliveryOptions options=null) {
+    Actor publish (Actor actor, args, DeliveryOptions options=null) {
         publish (actor.address, args, options)
     }
 
-    MyActor publish (Address postTo, def args, DeliveryOptions options=null) {
+    Actor publish (Address postTo, args, DeliveryOptions options=null) {
         JsonObject argsMessage = new JsonObject()
         argsMessage.put("args", args)
 
         getVertx().eventBus().publish (postTo.address, argsMessage, options ?: new DeliveryOptions())
         this
+    }
+
+    //alternate pub-sub method names for publish
+    Actor post (Actor actor, args, DeliveryOptions options=null) {
+        publish (actor.address, args, options)
+    }
+
+    Actor post (Address postTo, args, DeliveryOptions options=null) {
+        publish (postTo, args, options)
     }
 
     /*
@@ -269,8 +278,8 @@ trait ActorTrait implements Verticle {
         })
 
         //blocking wait for result to become available then return it
-        def result = results.take()
-
+        JsonObject jsonObjectReturn = results.take()
+        jsonObjectReturn.getValue('reply')
     }
 
     /**

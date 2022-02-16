@@ -1,6 +1,6 @@
 package scripts
 
-import com.softwood.actor.MyActor
+import com.softwood.actor.DefaultActor
 
 trait Ability {
     String getName() {nameString}  //refers to field in class
@@ -16,6 +16,6 @@ class SomeClass implements Ability {
 SomeClass sc = new SomeClass(name:"will")
 println sc.name
 
-MyActor ma = new MyActor (deploymentId: "dep id will")
+DefaultActor ma = new DefaultActor (deploymentId: "dep id will")
 
 println ma.deploymentId

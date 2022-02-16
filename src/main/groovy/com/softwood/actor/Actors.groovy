@@ -2,24 +2,8 @@ package com.softwood.actor
 
 import groovy.util.logging.Slf4j
 import io.micronaut.context.ApplicationContext
-import io.micronaut.context.BeanContextConfiguration
-import io.micronaut.context.BeanRegistration
-import io.micronaut.context.Qualifier
 import io.micronaut.context.annotation.Prototype
-import io.micronaut.context.annotation.Value
-import io.micronaut.context.env.Environment
-import io.micronaut.core.annotation.NonNull
-import io.micronaut.core.annotation.Nullable
-import io.micronaut.core.convert.ArgumentConversionContext
-import io.micronaut.core.convert.ConversionService
-import io.micronaut.core.convert.value.MutableConvertibleValues
-import io.micronaut.core.type.Argument
-import io.micronaut.inject.BeanConfiguration
-import io.micronaut.inject.BeanDefinition
-import io.micronaut.inject.BeanDefinitionReference
-import io.micronaut.inject.BeanIdentifier
 import io.micronaut.inject.qualifiers.Qualifiers
-import io.micronaut.inject.validation.BeanDefinitionValidator
 import io.vertx.core.Vertx
 import io.vertx.core.Verticle
 import io.vertx.core.Future
@@ -30,7 +14,6 @@ import jakarta.inject.Inject
 import jakarta.inject.Named
 
 import java.util.concurrent.ConcurrentHashMap
-import java.util.stream.Stream
 
 @Factory
 @Slf4j
@@ -83,17 +66,21 @@ class Actors<T> {
         }
     }
 
-    static HashMap<String, ?> deployedActors = new ConcurrentHashMap<>()
+    static HashMap<String, Actor> deployedActors = new ConcurrentHashMap<>()
+
+    static Map getDeployedActors () {
+        deployedActors.asImmutable()
+    }
 
     static List<String> activeActors () {
-        vertx.deploymentIDs().collect()
+        vertx.deploymentIDs().collect().asImmutable()
     }
 
     //todo - need to get types sorted to make this easier
     static List findDeployedActorsByName (String name) {
         List actors = deployedActors.values().toList()
 
-        def actor = actors.findAll {it.getName() == name}
+        def actor = actors.findAll {it.getName() == name}.asImmutable()
     }
 
     static void removeDeployedActor (Actor actor) {
@@ -107,14 +94,14 @@ class Actors<T> {
         }
     }
 
-    static void addDeployedActor (MyActor actor) {
+    static void addDeployedActor (Actor actor) {
         deployedActors.putIfAbsent (actor.deploymentId, actor)
     }
 
-    static MyActor myActor (String name, Closure action=null) {
+    static Actor defaultActor(String name, Closure action=null) {
 
-        MyActor actor
-        actor = new MyActor (name:name)
+        DefaultActor actor
+        actor = new DefaultActor (name:name)
 
         Verticle v = actor as Verticle
 
@@ -144,11 +131,11 @@ class Actors<T> {
      * @return returns a started actor
      */
     static Actor actor (String name, Closure action=null) {
-        StandardActor actor
+        FirstStandardActor actor
         if (action)
-            actor = new StandardActor (name, action)
+            actor = new FirstStandardActor (name, action)
         else
-            actor = new StandardActor (name)
+            actor = new FirstStandardActor (name)
 
         Verticle v = actor as Verticle
 
@@ -179,7 +166,7 @@ class Actors<T> {
      * @return returns a started actor
      */
     static Actor actor (Closure action=null) {
-        StandardActor actor = new StandardActor (action)
+        FirstStandardActor actor = new FirstStandardActor (action)
         Verticle v = actor as Verticle
 
         //deploy this specific verticle instance
@@ -220,7 +207,7 @@ class Actors<T> {
             println "actorGenerator found uninitialsed vertx state, attempted fix : injected future $future and set vertx as $vertx"
         }
 
-        StandardActor actor = new StandardActor ()
+        FirstStandardActor actor = new FirstStandardActor ()
         Verticle v = actor as Verticle
 
         //deploy this specific verticle instance
@@ -256,7 +243,7 @@ class Actors<T> {
         vertx = null
     }
 
-    static undeploy (MyActor actor) {
+    static undeploy (Actor actor) {
         vertx.undeploy(actor.deploymentId) {ar ->
             if (ar.succeeded()) {
                 log.debug "undeployed actor $actor.name with deploymentId $actor.deploymentId"
