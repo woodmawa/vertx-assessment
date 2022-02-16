@@ -261,6 +261,46 @@ class Actors<T> {
         actor
     }
 
+    @Bean
+    @Named ("DynamicDispatchActor")
+    @Prototype
+    Actor dynamicDisptachActorGenerator (@Named("Vertx") Future<Vertx> future) {
+
+        if (!futureServer) {
+            futureServer = future
+            assert futureServer.isComplete()
+            futureServer.onComplete { ar ->
+                if (ar.succeeded()) {
+                    vertx = ar.result()
+
+                } else {
+                    ar.cause().printStackTrace()
+                }
+            }
+            log.info  "dynamicDisptachActorGenerator found uninitialsed vertx state, attempted fix : injected future $future and set vertx as $vertx"
+        }
+
+        DynamicDispatchActor actor = new DynamicDispatchActor ()
+        Verticle v = actor as Verticle
+
+        //deploy this specific verticle instance
+        vertx.deployVerticle(v, {ar ->
+            if (ar.succeeded()) {
+                actor.deploymentId = ar.result()
+                addDeployedActor(actor)
+                actor.status = ActorState.Running
+
+                log.debug ("Actors.standardActor(): started verticle $this successfully and got deploymentId ${ar.result()}")
+
+                //whoopee
+            } else {
+                log.debug ("Actors.standardActor(): deployVerticle $this encountered a problem ${ar.cause().message}")
+            }
+        })
+
+        actor
+    }
+
     static shutdown () {
         log.debug ">>Actors.shutdown(): ${deployedActors.size()} to be shutdown "
         vertx.close(ar -> {
