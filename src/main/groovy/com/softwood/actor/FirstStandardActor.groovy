@@ -250,7 +250,7 @@ class FirstStandardActor extends AbstractVerticle implements Actor, Verticle {
     }
 
     void stop (Promise<Void> promise) {
-        log.debug "stop: # of consumers registered on address [$addressString] is currently ${consumers.size()},  unregister all the listeners "
+        log.debug "stop: #(${consumers.size()}) of consumers registered on address [$addressString] is currently ${consumers.size()},  unregister all the listeners "
 
         consumers.each {it.unregister()}
         consumers.clear()

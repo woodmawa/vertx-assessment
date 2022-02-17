@@ -119,14 +119,15 @@ trait ActorTrait implements Verticle, Actor {
     }
 
     void stop (Promise<Void> promise) {
-        log.debug "stop: # of consumers registered on address [${getAddress().address}] is currently ${consumers.size()},  unregister all the listeners "
+        log.debug "stop: #(${consumers.size()}) of consumers registered on address [${getAddress().address}] is currently ${consumers.size()},  unregister all the listeners "
+
 
         consumers.each {it.unregister()}
         consumers.clear()
         status = ActorState.Stopped
 
 
-        promise?.complete()
+        promise?.complete(null)
         promise?.future()
 
     }
