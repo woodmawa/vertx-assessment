@@ -5,6 +5,7 @@ import com.softwood.actor.Actors
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.vertx.core.json.JsonObject
 import jakarta.inject.Inject
+import jakarta.inject.Named
 import spock.lang.Specification
 import spock.util.concurrent.PollingConditions
 
@@ -13,8 +14,8 @@ import spock.util.concurrent.PollingConditions
 class ActorsFactoryTest extends Specification {
 
     //injected actor should have been deployed during bean creation in factory
-    @Inject def Actor actor1
-    @Inject def Actor actor2
+    @Inject @Named ("DefaultActor") Actor actor1
+    @Inject @Named ("DefaultActor") Actor actor2
 
 
     def "test injection " () {

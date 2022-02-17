@@ -10,6 +10,7 @@ import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.junit5.VertxTestContext
 import jakarta.inject.Inject
+import jakarta.inject.Named
 import spock.lang.Specification
 import spock.util.concurrent.AsyncConditions
 import spock.util.concurrent.PollingConditions
@@ -17,16 +18,19 @@ import spock.util.concurrent.PollingConditions
 @MicronautTest
 class FirstStandardActorTest extends Specification {
 
-    @Inject Actor initiator  //start already been called for inject targets
-    @Inject Actor responder
+    //inject for standardActor fails - not sure why !
+    //@Inject @Named ("StandardActor") Actor initiator  //start already been called for inject targets
+    //@Inject @Named ("StandardActor") Actor responder
     @Inject ApplicationContext context
 
     def "check actors deployedActors list is correctly managed" () {
         setup:
         def conditions = new PollingConditions(timeout: 5)
 
+        Actor initiator = Actors.fStandardActor ()
+        Actor responder = Actors.fStandardActor ()
+
         when:
-        assert Actors.getDeployedActors().size() == 0
 
         conditions.within(2) {
             //as initiator and responder are injected and in Running state
@@ -46,6 +50,9 @@ class FirstStandardActorTest extends Specification {
 
     def "send and receive reply " () {
         setup:
+        Actor initiator = Actors.fStandardActor ()
+        Actor responder = Actors.fStandardActor ()
+
         initiator.name = "will"
         responder.name = "maz"
         def result

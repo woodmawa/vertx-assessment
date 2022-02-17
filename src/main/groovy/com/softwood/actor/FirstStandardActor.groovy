@@ -9,6 +9,7 @@ import io.vertx.core.Handler
 import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
+import io.vertx.core.eventbus.EventBus
 import io.vertx.core.eventbus.Message
 import io.vertx.core.eventbus.MessageConsumer
 import io.vertx.core.json.JsonArray
@@ -148,10 +149,7 @@ class FirstStandardActor extends AbstractVerticle implements Actor {
         Closure clone = (Closure) action.clone()
         clone.delegate = this
 
-        MethodClosure mc = new MethodClosure (clone, "call")
-        mc.delegate = this
-
-        this.action = mc
+        this.action = clone
     }
 
     FirstStandardActor(String name, Closure action) {
@@ -161,15 +159,11 @@ class FirstStandardActor extends AbstractVerticle implements Actor {
         Closure clone = action.clone()
         clone.delegate = this
 
-        //have to set the delegate of the closure 'action' before we create the MethodClosure as this just invokes the former via the call() method
-        //so if delegate is not set it uses the initial and not the required context as the delegate for resolving methods/variables
-        MethodClosure mc = new MethodClosure (clone, "call")
-        mc.delegate = this
-        this.action = mc
+         this.action = clone
    }
 
     // code that takes 1 arg, and returns a result
-    FirstStandardActor(Function actionFunction) {
+    /*FirstStandardActor(Function actionFunction) {
         assert action
         //todo is this reasonable
 
@@ -188,7 +182,7 @@ class FirstStandardActor extends AbstractVerticle implements Actor {
         mc.delegate = this
 
         this.action = mc
-    }
+    }*/
 
     //synchronously deploy and start this actor
     void start() {
@@ -237,16 +231,21 @@ class FirstStandardActor extends AbstractVerticle implements Actor {
     //verticle start and stop methods - when start is running the deploymentId has not yet been generated
     void start(Promise<Void> promise) {
 
-        log.debug "start: register listeners on [$addressString]"
 
         //see page 56
         //register the default listener for the default address
         String address = getAddressString()
         String called = getName()
-        consumers << vertx.eventBus().<JsonObject>consumer (getAddressString(), this::executeAction )
-        status = ActorState.Running
+        def vtx = vertx
+        assert vtx.eventBus()
+        EventBus bus = vtx.eventBus()
+        def vtx2 = Actors.vertx
+        consumers << vertx.eventBus().consumer (address, this::executeAction )
+        log.debug "start: register listeners on [$addressString] added consumer ${consumers[0]}"
 
-        promise?.complete()
+        log.debug "start: promise is complete"
+        promise?.complete(null)
+
     }
 
     void stop (Promise<Void> promise) {
@@ -256,7 +255,7 @@ class FirstStandardActor extends AbstractVerticle implements Actor {
         consumers.clear()
         status = ActorState.Stopped
 
-        promise?.complete()
+        promise?.complete(null)
 
     }
 

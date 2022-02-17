@@ -110,10 +110,8 @@ class Actors<T> {
         DefaultActor actor
         actor = new DefaultActor (name:name)
 
-        Verticle v = actor as Verticle
-
         //deploy this specific verticle instance
-        vertx.deployVerticle(v, {ar ->
+        vertx.deployVerticle(actor, {ar ->
             if (ar.succeeded()) {
                 actor.deploymentId = ar.result()
 
@@ -136,10 +134,8 @@ class Actors<T> {
         DynamicDispatchActor actor
         actor = new DynamicDispatchActor (name:name, dynamicActionClosure:action ?: {it})
 
-        Verticle v = actor as Verticle
-
         //deploy this specific verticle instance
-        vertx.deployVerticle(v, {ar ->
+        vertx.deployVerticle(actor, {ar ->
             if (ar.succeeded()) {
                 actor.deploymentId = ar.result()
 
@@ -163,17 +159,15 @@ class Actors<T> {
      * @param Closure action,  for action - default provided which just returns it
      * @return returns a started actor
      */
-    static Actor actor (String name, Closure action=null) {
+    static Actor fStandardActor (String name, Closure action=null) {
         FirstStandardActor actor
         if (action)
             actor = new FirstStandardActor (name, action)
         else
             actor = new FirstStandardActor (name)
 
-        Verticle v = actor as Verticle
-
         //deploy this specific verticle instance
-        vertx.deployVerticle(v, {ar ->
+        vertx.deployVerticle(actor, {ar ->
             if (ar.succeeded()) {
                 actor.deploymentId = ar.result()
                 addDeployedActor(actor)
@@ -198,12 +192,11 @@ class Actors<T> {
      * @param Closure action,  for action - default provided which just returns it
      * @return returns a started actor
      */
-    static Actor actor (Closure action=null) {
+    static Actor fStandardActor (Closure action=null) {
         FirstStandardActor actor = new FirstStandardActor (action)
-        Verticle v = actor as Verticle
 
         //deploy this specific verticle instance
-        vertx.deployVerticle(v, {ar ->
+        vertx.deployVerticle(actor, {ar ->
             if (ar.succeeded()) {
                 actor.deploymentId = ar.result()
                 addDeployedActor(actor)
@@ -221,10 +214,50 @@ class Actors<T> {
         actor
     }
 
+    //todo : trying to inject standard actor bean fails - not sure why
     @Bean
-    @Named ("Actor")
+    @Named ("StandardActor")
     @Prototype
-    Actor actorGenerator (@Named("Vertx") Future<Vertx> future) {
+    Actor standardActorGenerator (@Named("Vertx") Future<Vertx> future) {
+
+        if (!futureServer) {
+            futureServer = future
+            assert futureServer.isComplete()
+            log.warn "standardActorGenerator found uninitialsed vertx state, attempted fix : injected future $future and set vertx as $vertx"
+
+            futureServer.onComplete { ar ->
+                if (ar.succeeded()) {
+                    vertx = ar.result()
+
+                } else {
+                    ar.cause().printStackTrace()
+                }
+            }
+        }
+
+        FirstStandardActor actor = new FirstStandardActor()
+        Verticle v = actor as Verticle
+
+        //deploy this specific verticle instance
+        vertx.deployVerticle(v, { ar ->
+            if (ar.succeeded()) {
+                actor.deploymentId = ar.result()
+                addDeployedActor(actor)
+                actor.status = ActorState.Running
+
+                log.debug("Actors.standardActor(): started verticle $this successfully and got deploymentId ${ar.result()}")
+
+                //whoopee
+            } else {
+                log.debug("Actors.standardActor(): deployVerticle $this encountered a problem ${ar.cause().message}")
+            }
+        })
+    }
+
+    @Bean
+    @Named ("DefaultActor")
+    @Prototype
+    Actor defaultActorGenerator (@Named("Vertx") Future<Vertx> future) {
 
         if (!futureServer) {
             futureServer = future
@@ -240,11 +273,10 @@ class Actors<T> {
             println "actorGenerator found uninitialsed vertx state, attempted fix : injected future $future and set vertx as $vertx"
         }
 
-        FirstStandardActor actor = new FirstStandardActor ()
-        Verticle v = actor as Verticle
+        DefaultActor actor = new DefaultActor ()
 
         //deploy this specific verticle instance
-        vertx.deployVerticle(v, {ar ->
+        vertx.deployVerticle(actor, {ar ->
             if (ar.succeeded()) {
                 actor.deploymentId = ar.result()
                 addDeployedActor(actor)
@@ -264,7 +296,7 @@ class Actors<T> {
     @Bean
     @Named ("DynamicDispatchActor")
     @Prototype
-    Actor dynamicDisptachActorGenerator (@Named("Vertx") Future<Vertx> future) {
+    Actor dynamicDispatchActorGenerator (@Named("Vertx") Future<Vertx> future) {
 
         if (!futureServer) {
             futureServer = future
@@ -281,20 +313,19 @@ class Actors<T> {
         }
 
         DynamicDispatchActor actor = new DynamicDispatchActor ()
-        Verticle v = actor as Verticle
 
         //deploy this specific verticle instance
-        vertx.deployVerticle(v, {ar ->
+        vertx.deployVerticle(actor, {ar ->
             if (ar.succeeded()) {
                 actor.deploymentId = ar.result()
                 addDeployedActor(actor)
                 actor.status = ActorState.Running
 
-                log.debug ("Actors.standardActor(): started verticle $this successfully and got deploymentId ${ar.result()}")
+                log.debug ("Actors.dynamicDispatchActor(): started verticle $this successfully and got deploymentId ${ar.result()}")
 
                 //whoopee
             } else {
-                log.debug ("Actors.standardActor(): deployVerticle $this encountered a problem ${ar.cause().message}")
+                log.debug ("Actors.dynamicDispatchActor(): deployVerticle $this encountered a problem ${ar.cause().message}")
             }
         })
 
@@ -319,7 +350,7 @@ class Actors<T> {
     static undeploy (Actor actor) {
         vertx.undeploy(actor.deploymentId) {ar ->
             if (ar.succeeded()) {
-                log.debug "undeployed actor $actor.name with deploymentId $actor.deploymentId"
+                log.debug "Actors.undeploy: undeployed actor $actor.name with deploymentId $actor.deploymentId"
                 removeDeployedActor(actor)
                 ActorTrait asActor = actor as ActorTrait
                 asActor.with {
@@ -329,7 +360,7 @@ class Actors<T> {
                     setSelfConsumer(null)
                 }
             } else {
-                log.error ("couldn't undeploy $actor.name with deploymentId [$actor.deploymentId]")
+                log.error ("Actors.undeploy: couldn't undeploy $actor.name with deploymentId [$actor.deploymentId]")
             }
         }
     }
