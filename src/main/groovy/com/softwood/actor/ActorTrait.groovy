@@ -200,16 +200,6 @@ trait ActorTrait implements Verticle, Actor {
         Context ctx = getVertx().getOrCreateContext()
         Future future = ctx.executeBlocking(code)
 
-        future.onComplete({ arg ->
-            if (arg.succeeded()) {
-                def result = arg.result()
-                log.debug "ran code block on worker thread and returned [$result]"
-
-            } else {
-                log.debug "completed blockingCode run and failed with ${arg.cause().message}"
-            }
-        })
-
         future
     }
 
