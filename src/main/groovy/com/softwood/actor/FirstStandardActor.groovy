@@ -7,6 +7,7 @@ import io.vertx.core.Context
 import io.vertx.core.Future
 import io.vertx.core.Handler
 import io.vertx.core.Promise
+import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.DeliveryOptions
 import io.vertx.core.eventbus.EventBus
@@ -27,7 +28,7 @@ import java.util.stream.Stream
 
 @Slf4j
 @Prototype
-class FirstStandardActor extends AbstractVerticle implements Actor {
+class FirstStandardActor extends AbstractVerticle implements Actor, Verticle {
 
     private Optional<String> name = Optional.of ("${getClass().simpleName}@${Integer.toHexString(System.identityHashCode(this)) }")
     private String deploymentId = ""

@@ -19,7 +19,7 @@ import spock.util.concurrent.PollingConditions
 class FirstStandardActorTest extends Specification {
 
     //inject for standardActor fails - not sure why !
-    //@Inject @Named ("StandardActor") Actor initiator  //start already been called for inject targets
+    //@Inject @Named ("StandardActor") Actor anyold  //start already been called for inject targets
     //@Inject @Named ("StandardActor") Actor responder
     @Inject ApplicationContext context
 
