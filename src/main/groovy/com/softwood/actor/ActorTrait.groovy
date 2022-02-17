@@ -63,11 +63,15 @@ trait ActorTrait implements Verticle, Actor {
         if (defaultConsumer){
             log.debug "setName: removed default listener"
             consumers.remove(defaultConsumer)
+            setSelfConsumer(null)
         }
         this._name = Optional.of(name)
+
         //if already deployed, add this as consumer for the new name
-        if (getVertx())
-            addConsumer(this::executeAction)
+        if (getVertx()) {
+            defaultConsumer = addConsumer(this::executeAction)
+            setSelfConsumer(defaultConsumer)
+        }
         else {
             log.info "changed name of actor to [${getName()}] to this verticle, but it is not yet deployed "
         }
@@ -120,6 +124,7 @@ trait ActorTrait implements Verticle, Actor {
         consumers.each {it.unregister()}
         consumers.clear()
         status = ActorState.Stopped
+
 
         promise?.complete()
         promise?.future()

@@ -320,9 +320,14 @@ class Actors<T> {
         vertx.undeploy(actor.deploymentId) {ar ->
             if (ar.succeeded()) {
                 log.debug "undeployed actor $actor.name with deploymentId $actor.deploymentId"
-                actor.setStatus ( ActorState.Stopped )
-                actor.setDeploymentId("")
-                actor.removeConsumer (actor.getSelfConsumer())
+                removeDeployedActor(actor)
+                ActorTrait asActor = actor as ActorTrait
+                asActor.with {
+                    setStatus ( ActorState.Stopped )
+                    setDeploymentId("")
+                    removeConsumer (getSelfConsumer())
+                    setSelfConsumer(null)
+                }
             } else {
                 log.error ("couldn't undeploy $actor.name with deploymentId [$actor.deploymentId]")
             }
