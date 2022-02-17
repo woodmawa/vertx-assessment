@@ -40,7 +40,7 @@ class FirstStandardActorTest extends Specification {
             assert responder.status == ActorState.Running
             assert Actors.getDeployedActors().size() == 2
          }
-        responder.close()
+        responder.close()  //should remove responder from deployed actors 
 
         then:
         conditions.within(5) {
