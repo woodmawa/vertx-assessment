@@ -20,20 +20,16 @@ import spock.util.concurrent.PollingConditions
 @MicronautTest
 class FirstStandardActorTest extends Specification {
 
-    //inject for standardActor fails - not sure why !
-    //@Inject @Named ("StandardActor") Actor anyold  //start already been called for inject targets
-    //@Inject @Named ("StandardActor") Actor responder
+    @Inject @Named ("StandardActor") Actor initiator  //start already been called for inject targets
+    @Inject @Named ("StandardActor") Actor responder
     @Inject ApplicationContext context
 
     def "check actors deployedActors list is correctly managed" () {
         setup:
         def conditions = new PollingConditions(timeout: 5)
 
-        Actor initiator = Actors.fStandardActor ()
-        Actor responder = Actors.fStandardActor ()
-
         BeanDefinition<FirstStandardActor> definition = context.getBeanDefinition(FirstStandardActor)
-        FirstStandardActor proto = context.getBean(FirstStandardActor)
+        //FirstStandardActor proto = context.getBean(FirstStandardActor)
         assert definition
 
         when:
@@ -56,8 +52,8 @@ class FirstStandardActorTest extends Specification {
 
     def "send and receive reply " () {
         setup:
-        Actor initiator = Actors.fStandardActor ()
-        Actor responder = Actors.fStandardActor ()
+        //Actor initiator = Actors.fStandardActor ()
+        //Actor responder = Actors.fStandardActor ()
 
         initiator.name = "will"
         responder.name = "maz"

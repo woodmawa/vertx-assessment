@@ -252,6 +252,8 @@ class Actors<T> {
                 log.debug("Actors.standardActor(): deployVerticle $this encountered a problem ${ar.cause().message}")
             }
         })
+
+        actor
     }
 
     @Bean
