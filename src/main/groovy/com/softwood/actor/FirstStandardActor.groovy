@@ -230,7 +230,7 @@ class FirstStandardActor extends AbstractVerticle implements Actor, Verticle {
     }
 
     //verticle start and stop methods - when start is running the deploymentId has not yet been generated
-    void start(Promise<Void> promise) {
+    void start(Promise promise) {
 
 
         //see page 56
@@ -245,7 +245,7 @@ class FirstStandardActor extends AbstractVerticle implements Actor, Verticle {
         log.debug "start: register listeners on [$addressString] added consumer ${consumers[0]}"
 
         log.debug "start: promise is complete"
-        promise?.complete(null)
+        promise?.complete()
 
     }
 

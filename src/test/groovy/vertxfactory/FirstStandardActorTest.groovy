@@ -3,7 +3,9 @@ package vertxfactory
 import com.softwood.actor.Actor
 import com.softwood.actor.ActorState
 import com.softwood.actor.Actors
+import com.softwood.actor.FirstStandardActor
 import io.micronaut.context.ApplicationContext
+import io.micronaut.inject.BeanDefinition
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.vertx.core.Context
 import io.vertx.core.Future
@@ -29,6 +31,10 @@ class FirstStandardActorTest extends Specification {
 
         Actor initiator = Actors.fStandardActor ()
         Actor responder = Actors.fStandardActor ()
+
+        BeanDefinition<FirstStandardActor> definition = context.getBeanDefinition(FirstStandardActor)
+        FirstStandardActor proto = context.getBean(FirstStandardActor)
+        assert definition
 
         when:
 
