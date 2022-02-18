@@ -90,19 +90,13 @@ class Actors<T> {
         def actor = actors.findAll {it.getName() == name}.asImmutable()
     }
 
-    static void removeDeployedActor (Actor actor) {
-        vertx.undeploy(actor.deploymentId) {ar ->
-            if (ar.succeeded()){
-                log.info "successfully undeployed ${actor.name}"
-                deployedActors.remove(actor.deploymentId)
-            } else {
-                log.error "failed to undeploy ${actor.name}, reason : " + ar.cause()
-            }
-        }
+    private static void addDeployedActor (Actor actor) {
+        deployedActors.putIfAbsent (actor.deploymentId, actor)
     }
 
-    static void addDeployedActor (Actor actor) {
-        deployedActors.putIfAbsent (actor.deploymentId, actor)
+    //private used internally when undeploying an actor
+    private static void removeDeployedActor (Actor actor) {
+        deployedActors.remove (actor.deploymentId)
     }
 
     static Actor defaultActor(String name, Closure action=null) {
@@ -350,10 +344,12 @@ class Actors<T> {
     }
 
     static undeploy (Actor actor) {
+        assert actor.deploymentId
+
         vertx.undeploy(actor.deploymentId) {ar ->
             if (ar.succeeded()) {
                 log.debug "Actors.undeploy: undeployed actor $actor.name with deploymentId $actor.deploymentId"
-                removeDeployedActor(actor)
+                Actors.removeDeployedActor (actor)
                 ActorTrait asActor = actor as ActorTrait
                 asActor.with {
                     setStatus ( ActorState.Stopped )
