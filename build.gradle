@@ -46,7 +46,6 @@ dependencies {
     implementation group: 'com.hazelcast', name: 'hazelcast', version: "$hazelCastVersion"
 
     implementation "io.reactivex.rxjava3:rxjava:$rxJavaVersion"
-    implementation "io.reactivex:rxgroovy:$rxJavaVersion"
 
     implementation group: 'io.vertx', name: 'vertx-core', version: "$vertxVersion"
     implementation group: 'io.vertx', name: 'vertx-lang-groovy', version: "$vertxVersion"
