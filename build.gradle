@@ -27,6 +27,7 @@ repositories {
 
 
 String vertxVersion = "4.2.4"
+String rxJavaVersion = "3.1.3"
 String junitJupiterVersion = "5.8.2"
 String hazelCastVersion = "5.0.2"
 String groovyVersion = "3.0.9"
@@ -44,7 +45,8 @@ dependencies {
 
     implementation group: 'com.hazelcast', name: 'hazelcast', version: "$hazelCastVersion"
 
-    implementation "io.reactivex.rxjava3:rxjava:3.1.3"
+    implementation "io.reactivex.rxjava3:rxjava:$rxJavaVersion"
+    implementation "io.reactivex:rxgroovy:$rxJavaVersion"
 
     implementation group: 'io.vertx', name: 'vertx-core', version: "$vertxVersion"
     implementation group: 'io.vertx', name: 'vertx-lang-groovy', version: "$vertxVersion"
