@@ -49,4 +49,20 @@ class ActorsFactoryTest extends Specification {
         }
 
     }
+
+    def "test send with circuit breaker  test " () {
+        setup:
+        def ddActor = Actors.dynamicDispatchActor('will', {println "\t>> $it"; it})
+        def conditions = new PollingConditions(timeout: 10)
+        def result
+
+        when:
+        result = ddActor.send(ddActor, "hello world")
+
+        then  :
+        conditions.within (3) {
+            true
+        }
+
+    }
 }

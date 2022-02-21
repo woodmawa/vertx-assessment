@@ -8,6 +8,7 @@ import io.vertx.core.eventbus.MessageConsumer
 import org.codehaus.groovy.runtime.MethodClosure
 
 import java.time.Duration
+import java.util.concurrent.TimeUnit
 
 interface  Actor {
 
@@ -36,8 +37,10 @@ interface  Actor {
     //pseudo sync, blocking,  call
     def requestAndReply(Actor actor, args)
     def requestAndReply(Actor actor, args, DeliveryOptions options)
-    def requestAndReply(Address sendTo, args)
-    def requestAndReply(Address sendTo, args, DeliveryOptions options)
+    def requestAndReply(Actor actor, args, long waitFor, TimeUnit tu)
+    def requestAndReply(Actor actor, args, long waitFor, TimeUnit tu, DeliveryOptions options)
+
+    def requestAndReply(Address sendTo, args, long waitFor, TimeUnit tu, DeliveryOptions options)
 
     //async request, get a future as response
     Future requestAndAsyncReply(Address address, args)

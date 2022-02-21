@@ -2,6 +2,7 @@ package com.softwood.actor
 
 import groovy.transform.ToString
 import groovy.util.logging.Slf4j
+import io.vertx.core.AsyncResult
 import io.vertx.core.Context
 import io.vertx.core.Future
 import io.vertx.core.Handler
@@ -21,6 +22,7 @@ import javax.validation.constraints.NotNull
 import java.time.Duration
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 
 @Slf4j
 trait ActorTrait implements Verticle, Actor {
@@ -220,8 +222,19 @@ trait ActorTrait implements Verticle, Actor {
         JsonObject argsMessage = new JsonObject()
         argsMessage.put("args", args)
 
-        getVertx().eventBus().send(sendTo.address, argsMessage, options ?: new DeliveryOptions())
+        //use the circuit breaker setup in the AbstractActor
+        this.breaker.execute { Promise promise  ->
+            Future result = getVertx().eventBus().send(sendTo.address, argsMessage, options ?: new DeliveryOptions())
+            result.onComplete { AsyncResult ar ->
+                if (ar.succeeded())  {
+                    promise.complete(ar.result())
+                } else {
+                    promise.fail(ar.cause())
+                }
+            }
+        }
         this
+
     }
 
     /*
@@ -235,7 +248,17 @@ trait ActorTrait implements Verticle, Actor {
         JsonObject argsMessage = new JsonObject()
         argsMessage.put("args", args)
 
-        getVertx().eventBus().publish (postTo.address, argsMessage, options ?: new DeliveryOptions())
+        //use the circuit breaker setup in the AbstractActor
+        this.breaker.execute { Promise promise  ->
+            Future result = getVertx().eventBus().send(sendTo.address, argsMessage, options ?: new DeliveryOptions())
+            result.onComplete { AsyncResult ar ->
+                if (ar.succeeded())  {
+                    promise.complete(ar.result())
+                } else {
+                    promise.fail(ar.cause())
+                }
+            }
+        }
         this
     }
 
@@ -253,10 +276,15 @@ trait ActorTrait implements Verticle, Actor {
      * using blocking queue to simulate synchronous RPC call
      */
     def requestAndReply(Actor actor,  args, DeliveryOptions options = null) {
-        requestAndReply(actor.address, args, options)
+        requestAndReply(actor.address, args, 3, TimeUnit.SECONDS, options)
     }
 
-    def requestAndReply(Address requestAddress,  args, DeliveryOptions options = null) {
+    def requestAndReply(Actor actor,  args, long waitFor, TimeUnit tu,  DeliveryOptions options = null) {
+        requestAndReply(actor.address, args, waitFor, tu, options)
+    }
+    
+
+    def requestAndReply(Address requestAddress,  args, long waitFor, TimeUnit tu, DeliveryOptions options = null) {
         log.debug ("request&reply: [$args] sent to [${address.address}]")
 
         BlockingQueue results = new LinkedBlockingQueue()
@@ -267,17 +295,34 @@ trait ActorTrait implements Verticle, Actor {
         // see also https://github.com/vert-x3/wiki/wiki/RFC:-Future-API
 
         //use new promise/future model - resuest is expecting a message.reply()
-        Future response = getVertx().eventBus().request(requestAddress.address, argsMessage, options ?: new DeliveryOptions())
+        //use the circuit breaker setup in the AbstractActor
+        Future<Message> response
 
-        //get response and add to blocking Queue
-        response.onComplete(ar -> {
-            log.debug "in requestsAndReply, future handler with [${ar.result().body()}]"
-            results.put (ar.result().body())
-        })
+        this.breaker.execute { Promise promise  ->
+            response = getVertx().eventBus().request(requestAddress.address, argsMessage, options ?: new DeliveryOptions())
+
+            //get response and add to blocking Queue
+            response.onComplete(ar -> {
+                if (response.succeeded()) {
+                    log.debug "in requestsAndReply, future handler with [${ar.result().body()}]"
+                    results.put(ar.result().body())
+                    promise.complete(ar.result().body())
+                } else {
+                    log.error "in requestsAndReply, future handler with error [${ar.cause()}]"
+                    String errMessage = "with error: ${ar.cause().message()} "
+                    results.put (new JsonObject ('reply', errMessage ) )
+                    promise.fail(ar.cause())
+                }
+            })
+
+
+            response
+        }
 
         //blocking wait for result to become available then return it
-        JsonObject jsonObjectReturn = results.take()
-        jsonObjectReturn.getValue('reply')
+        JsonObject jsonObjectReturn = results.poll(waitFor, tu)
+
+        jsonObjectReturn?.getValue('reply')
     }
 
     /**
@@ -300,8 +345,21 @@ trait ActorTrait implements Verticle, Actor {
         argsMessage.put("args", args)
         // see also https://github.com/vert-x3/wiki/wiki/RFC:-Future-API
 
-        //use new promise/future model - resuest is expecting a message.reply()
-        Future response = getVertx().eventBus().request(requestAddress.address, argsMessage, options ?: new DeliveryOptions())
+        //use new promise/future model - request is expecting a message.reply()
+        Future response
+        this.breaker.execute { Promise promise ->
+            response = getVertx().eventBus().request(requestAddress.address, argsMessage, options ?: new DeliveryOptions())
+
+            //when complete update the circuitBreaker promise
+            response.onComplete {ar ->
+                if (ar.succeeded()) {
+                    promise.complete(ar.result().body())
+                } else {
+                    promise.fail (ar.cause())
+                }
+            }
+        }
+        response
 
     }
 

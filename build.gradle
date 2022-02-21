@@ -50,6 +50,7 @@ dependencies {
     implementation group: 'io.vertx', name: 'vertx-core', version: "$vertxVersion"
     implementation group: 'io.vertx', name: 'vertx-lang-groovy', version: "$vertxVersion"
     implementation group: 'io.vertx', name: 'vertx-hazelcast', version: "$vertxVersion"
+    implementation group: 'io.vertx', name: 'vertx-circuit-breaker', version: "$vertxVersion"
     compileOnly "io.vertx:vertx-rx-java3:$vertxVersion"
 
     testImplementation group: 'io.vertx', name: 'vertx-unit', version: "$vertxVersion"
