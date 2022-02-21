@@ -22,6 +22,7 @@ import javax.validation.constraints.NotNull
 import java.time.Duration
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 import java.util.function.Function
 import java.util.function.Supplier
 import java.util.stream.Stream
@@ -457,15 +458,20 @@ class FirstStandardActor extends AbstractVerticle implements Actor, Verticle {
         requestAndReply(this.addressString, args, options)
     }
 
-    def requestAndReply(Actor actor,  args, DeliveryOptions options = null) {
-        requestAndReply(actor.address, args, options)
+    def requestAndReply(Actor actor, Object args, DeliveryOptions options = null) {
+        requestAndReply(actor.address, args, 3_000, TimeUnit.MILLISECONDS, options)
     }
 
-    def requestAndReply(Address address,  args, DeliveryOptions options = null) {
-        requestAndReply(address.address, args, options)
+    def requestAndReply(Actor actor,  args, long waitFor, TimeUnit tu, DeliveryOptions options = null) {
+
+        requestAndReply(actor.address, args, waitFor, tu, options)
     }
 
-    def requestAndReply(String address,  args, DeliveryOptions options = null) {
+    def requestAndReply(Address address, args, long waitFor, TimeUnit tu, DeliveryOptions options = null) {
+        requestAndReply(address.address, args, waitFor, tu, options)
+    }
+
+    def requestAndReply(String address,  args, long waitFor, TimeUnit tu, DeliveryOptions options = null) {
         log.debug ("request&reply: [$args] sent to [${address}]")
 
         BlockingQueue results = new LinkedBlockingQueue()
@@ -485,7 +491,8 @@ class FirstStandardActor extends AbstractVerticle implements Actor, Verticle {
         })
 
         //blocking wait for result to become available then return it
-        JsonObject jsonObjectReturn = results.take()
+        JsonObject jsonObjectReturn = results.poll(waitFor, tu)
+
         jsonObjectReturn.getValue('reply')
     }
 
@@ -634,6 +641,5 @@ class FirstStandardActor extends AbstractVerticle implements Actor, Verticle {
     void close () {
         Actors.undeploy(this)
     }
-
 
 }

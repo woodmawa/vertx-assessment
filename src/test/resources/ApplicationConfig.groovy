@@ -7,6 +7,12 @@ actor{
         vertxOptions {
 
         }
+
+        circuitBreaker{
+            retries = 2
+            timeout = 3_000         // consider if failure if circuit breaker execute() doesnt succeed
+            resetTimeout = 10_000   //time spent in open state before attempting to reset
+        }
     }
 }
 

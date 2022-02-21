@@ -276,13 +276,14 @@ trait ActorTrait implements Verticle, Actor {
      * using blocking queue to simulate synchronous RPC call
      */
     def requestAndReply(Actor actor,  args, DeliveryOptions options = null) {
-        requestAndReply(actor.address, args, 3, TimeUnit.SECONDS, options)
+        long waitFor = this.appConfig.actor.framework.circuitBreaker.timeout * this.appConfig.actor.framework.circuitBreaker.retries
+        requestAndReply(actor.address, args, 3, TimeUnit.MILLISECONDS, options)
     }
 
     def requestAndReply(Actor actor,  args, long waitFor, TimeUnit tu,  DeliveryOptions options = null) {
         requestAndReply(actor.address, args, waitFor, tu, options)
     }
-    
+
 
     def requestAndReply(Address requestAddress,  args, long waitFor, TimeUnit tu, DeliveryOptions options = null) {
         log.debug ("request&reply: [$args] sent to [${address.address}]")

@@ -1,5 +1,6 @@
 package com.softwood.actor
 
+import io.micronaut.context.ApplicationContext
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.circuitbreaker.CircuitBreakerOptions
 import io.vertx.core.AbstractVerticle
@@ -20,9 +21,9 @@ import org.codehaus.groovy.runtime.MethodClosure
 abstract class AbstractActor extends AbstractVerticle implements Verticle, ActorTrait {
 
 
-    @Inject ConfigObject appConfig
+    //@Inject ConfigObject appConfig - seems to fail here - try direct read
 
-    //AbstractVerticle provides getVertx() ref to vertx that deployed this verticle
+    ConfigObject appConfig = ApplicationContext.run().getBean(ConfigObject)
 
     protected Vertx _vertx
     protected ActorState _status = ActorState.Created
@@ -38,12 +39,18 @@ abstract class AbstractActor extends AbstractVerticle implements Verticle, Actor
     AbstractActor () {
 
         def vertx = Actors.vertx
+
+        def actor = appConfig.actor
+        long timeout = appConfig.actor.framework.circuitBreaker.timeout
+        long resetTimeout = appConfig.actor.framework.circuitBreaker.resetTimeout
+        long retries = appConfig.actor.framework.circuitBreaker.retries
+
         breaker = CircuitBreaker.create("actor-circuit-breaker", vertx,
                 new CircuitBreakerOptions()
-                        .setMaxFailures(2) // number of failure before opening the circuit
-                        .setTimeout(3_000) // consider a failure if the operation does not succeed in time
+                        .setMaxFailures(retries) // number of failure before opening the circuit
+                        .setTimeout(timeout) // consider a failure if the operation does not succeed in time
                         .setFallbackOnFailure(true) // do we call the fallback on failure
-                        .setResetTimeout(10_000) // time spent in open state before attempting to re-try
+                        .setResetTimeout(resetTimeout) // time spent in open state before attempting to re-try
         )
 
 
