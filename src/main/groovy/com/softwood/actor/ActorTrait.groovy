@@ -37,7 +37,11 @@ trait ActorTrait implements Verticle, Actor {
         _deploymentId = did
     }
 
-  List<MessageConsumer> getConsumers() {_consumers}
+    void setExceptionStrategy (@NotNull strategy) {
+        this._optionalExceptionStrategy = Optional.of(strategy)
+    }
+
+    List<MessageConsumer> getConsumers() {_consumers}
 
 
     @PreDestroy
@@ -223,8 +227,9 @@ trait ActorTrait implements Verticle, Actor {
         argsMessage.put("args", args)
 
         //use the circuit breaker setup in the AbstractActor
-        this.breaker.execute { Promise promise  ->
+        this._breaker.execute { Promise promise  ->
             Future result = getVertx().eventBus().send(sendTo.address, argsMessage, options ?: new DeliveryOptions())
+            result.onFailure(this::processException)
             result.onComplete { AsyncResult ar ->
                 if (ar.succeeded())  {
                     promise.complete(ar.result())
@@ -249,8 +254,9 @@ trait ActorTrait implements Verticle, Actor {
         argsMessage.put("args", args)
 
         //use the circuit breaker setup in the AbstractActor
-        this.breaker.execute { Promise promise  ->
+        this._breaker.execute { Promise promise  ->
             Future result = getVertx().eventBus().send(sendTo.address, argsMessage, options ?: new DeliveryOptions())
+            result.onFailure(this::processException)
             result.onComplete { AsyncResult ar ->
                 if (ar.succeeded())  {
                     promise.complete(ar.result())
@@ -299,10 +305,11 @@ trait ActorTrait implements Verticle, Actor {
         //use the circuit breaker setup in the AbstractActor
         Future<Message> response
 
-        this.breaker.execute { Promise promise  ->
+        this._breaker.execute { Promise promise  ->
             response = getVertx().eventBus().request(requestAddress.address, argsMessage, options ?: new DeliveryOptions())
 
             //get response and add to blocking Queue
+            response.onFailure(this::processException)
             response.onComplete(ar -> {
                 if (response.succeeded()) {
                     log.debug "in requestsAndReply, future handler with [${ar.result().body()}]"
@@ -348,10 +355,11 @@ trait ActorTrait implements Verticle, Actor {
 
         //use new promise/future model - request is expecting a message.reply()
         Future response
-        this.breaker.execute { Promise promise ->
+        this._breaker.execute { Promise promise ->
             response = getVertx().eventBus().request(requestAddress.address, argsMessage, options ?: new DeliveryOptions())
 
             //when complete update the circuitBreaker promise
+            response.onFailure(this::processException)
             response.onComplete {ar ->
                 if (ar.succeeded()) {
                     promise.complete(ar.result().body())

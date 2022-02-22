@@ -1,9 +1,11 @@
 package com.softwood.actor
 
+import groovy.util.logging.Slf4j
 import io.micronaut.context.ApplicationContext
 import io.vertx.circuitbreaker.CircuitBreaker
 import io.vertx.circuitbreaker.CircuitBreakerOptions
 import io.vertx.core.AbstractVerticle
+import io.vertx.core.Future
 import io.vertx.core.Verticle
 import io.vertx.core.Vertx
 import io.vertx.core.eventbus.MessageConsumer
@@ -18,6 +20,7 @@ import org.codehaus.groovy.runtime.MethodClosure
  * @Author will woodman
  * @Date 16-02-2022
  */
+@Slf4j
 abstract class AbstractActor extends AbstractVerticle implements Verticle, ActorTrait {
 
 
@@ -33,7 +36,8 @@ abstract class AbstractActor extends AbstractVerticle implements Verticle, Actor
     protected MessageConsumer _selfConsumer
     protected Closure _action = { it }  //identity closure
 
-    protected CircuitBreaker breaker  //used for retry handling
+    protected CircuitBreaker _breaker  //used for retry handling
+    protected Optional<Closure> _optionalExceptionStrategy = Optional.empty()
 
     //default constructor
     AbstractActor () {
@@ -45,7 +49,7 @@ abstract class AbstractActor extends AbstractVerticle implements Verticle, Actor
         long resetTimeout = appConfig.actor.framework.circuitBreaker.resetTimeout
         long retries = appConfig.actor.framework.circuitBreaker.retries
 
-        breaker = CircuitBreaker.create("actor-circuit-breaker", vertx,
+        _breaker = CircuitBreaker.create("actor-circuit-breaker", vertx,
                 new CircuitBreakerOptions()
                         .setMaxFailures(retries) // number of failure before opening the circuit
                         .setTimeout(timeout) // consider a failure if the operation does not succeed in time
@@ -54,6 +58,18 @@ abstract class AbstractActor extends AbstractVerticle implements Verticle, Actor
         )
 
 
+    }
+
+    /*
+     * used as method closure for use with vertx futures  onFailure (Handler<Throwable>)
+     * can be overriden - or just set the exception strategy closure
+     */
+    def processException (Throwable t) {
+        //if there is an exeption strategy set - call it - else just print stacktrace as default
+
+        log.debug "actor processing failed with $t.message, call actor's error strategy where this is defined $_optionalExceptionStrategy"
+        _optionalExceptionStrategy.orElse({Throwable::printStackTrace}).call()
+        t
     }
 
 }
