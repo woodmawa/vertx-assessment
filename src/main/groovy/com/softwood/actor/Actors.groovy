@@ -13,6 +13,7 @@ import io.micronaut.context.annotation.Factory
 import jakarta.inject.Inject
 import jakarta.inject.Named
 
+import javax.validation.constraints.NotNull
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -343,23 +344,28 @@ class Actors<T> {
         vertx = null
     }
 
-    static undeploy (Actor actor) {
-        assert actor.deploymentId
+    static undeploy (@NotNull Actor actor) {
+        String depId  = actor.deploymentId
 
-        vertx.undeploy(actor.deploymentId) {ar ->
-            if (ar.succeeded()) {
-                log.debug "Actors.undeploy: undeployed actor $actor.name with deploymentId $actor.deploymentId"
-                Actors.removeDeployedActor (actor)
-                ActorTrait asActor = actor as ActorTrait
-                asActor.with {
-                    setStatus ( ActorState.Stopped )
-                    setDeploymentId("")
-                    removeConsumer (getSelfConsumer())
-                    setSelfConsumer(null)
+        if (depId) {
+            log.debug "undeploying actor $actor"
+            vertx.undeploy(actor.deploymentId) { ar ->
+                if (ar.succeeded()) {
+                    log.debug "Actors.undeploy: undeployed actor $actor.name with deploymentId $actor.deploymentId"
+                    Actors.removeDeployedActor(actor)
+                    ActorTrait asActor = actor as ActorTrait
+                    asActor.with {
+                        setStatus(ActorState.Stopped)
+                        setDeploymentId("")
+                        removeConsumer(getSelfConsumer())
+                        setSelfConsumer(null)
+                    }
+                } else {
+                    log.error("Actors.undeploy: couldn't undeploy $actor.name with deploymentId [$actor.deploymentId]")
                 }
-            } else {
-                log.error ("Actors.undeploy: couldn't undeploy $actor.name with deploymentId [$actor.deploymentId]")
             }
+        } else {
+            log.info "requested to undeploy $actor but deployment id was '$depId'"
         }
     }
 }

@@ -283,7 +283,7 @@ trait ActorTrait implements Verticle, Actor {
      */
     def requestAndReply(Actor actor,  args, DeliveryOptions options = null) {
         long waitFor = this.appConfig.actor.framework.circuitBreaker.timeout * this.appConfig.actor.framework.circuitBreaker.retries
-        requestAndReply(actor.address, args, 3, TimeUnit.MILLISECONDS, options)
+        requestAndReply(actor.address, args, waitFor, TimeUnit.MILLISECONDS, options)
     }
 
     def requestAndReply(Actor actor,  args, long waitFor, TimeUnit tu,  DeliveryOptions options = null) {

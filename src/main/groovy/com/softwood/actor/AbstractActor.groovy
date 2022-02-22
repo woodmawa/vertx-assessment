@@ -44,10 +44,10 @@ abstract class AbstractActor extends AbstractVerticle implements Verticle, Actor
 
         def vertx = Actors.vertx
 
-        def actor = appConfig.actor
+        assert appConfig.actor, "ConfigObject was not initialised correctly "  // check this has been loaded correctly
         long timeout = appConfig.actor.framework.circuitBreaker.timeout
         long resetTimeout = appConfig.actor.framework.circuitBreaker.resetTimeout
-        long retries = appConfig.actor.framework.circuitBreaker.retries
+        int retries = appConfig.actor.framework.circuitBreaker.retries
 
         _breaker = CircuitBreaker.create("actor-circuit-breaker", vertx,
                 new CircuitBreakerOptions()
