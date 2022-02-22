@@ -82,7 +82,7 @@ source.test().assertNoValues()//test().assertEmpty()
 
 PublishSubject<Integer> source2 = PublishSubject.<Integer>create()
 
-source2.buffer(1024)//  window(2)// 
+source2.buffer(1024)//  window(2)//
         .observeOn(Schedulers.computation())
         .subscribe(computeFunction, Throwable::printStackTrace)
 
