@@ -80,6 +80,16 @@ source.onComplete()
 
 source.test().assertNoValues()//test().assertEmpty()
 
+PublishSubject<Integer> source2 = PublishSubject.<Integer>create()
+
+source2.window(500)
+        .observeOn(Schedulers.computation())
+        .subscribe(computeFunction, Throwable::printStackTrace)
+
+source2.onNext(15)
+source2.onComplete()
+//nothing is printed!
+
 /*
 PublishSubject<Integer> source = PublishSubject.<Integer>create{ ObservableEmitter emitter -> emitter.onNext(value)}
 IntStream.range(1, 10).forEach(source::onNext)
