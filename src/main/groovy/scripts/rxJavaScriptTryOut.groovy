@@ -82,12 +82,15 @@ source.test().assertNoValues()//test().assertEmpty()
 
 PublishSubject<Integer> source2 = PublishSubject.<Integer>create()
 
-source2.buffer(1024)//window(500)
+source2.buffer(1024)//  window(2)// 
         .observeOn(Schedulers.computation())
         .subscribe(computeFunction, Throwable::printStackTrace)
 
 source2.onNext(15)
 source2.onNext(16)
+source2.onNext(17)
+source2.onNext(18)
+source2.onNext(19)
 source2.onComplete()
 //nothing is printed for window()!
 
