@@ -87,6 +87,7 @@ source2.buffer(1024)//window(500)
         .subscribe(computeFunction, Throwable::printStackTrace)
 
 source2.onNext(15)
+source2.onNext(16)
 source2.onComplete()
 //nothing is printed for window()!
 
@@ -96,6 +97,3 @@ IntStream.range(1, 10).forEach(source::onNext)
         source.subscribe(computeFunction, Throwable::printStackTrace)
 */
 
-/*source.buffer(1024)
-        .observeOn(Schedulers.computation())
-        .subscribe(computeFunction, Throwable::printStackTrace)*/
