@@ -69,10 +69,11 @@ Flowable.range(1, 10)
 
 
 PublishSubject<Integer> source = PublishSubject.<Integer>create()
-source.subscribe({println "received from publishSubject  $it"})
+source.subscribe({println "1st subscriber received from publishSubject  $it"})
+source.subscribe({println "2nd subscriber received from publishSubject  $it"})
 source.onNext(1)
 source.onNext(2)
-source.onNext(2)
+source.onNext(3)
 source.onComplete()
 
 source.test().assertNoValues()//test().assertEmpty()
