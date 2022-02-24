@@ -65,8 +65,16 @@ publisher.submit("world")
 println "-- publisher close()"
 publisher.close()
 
-
 sleep(1000)
+/*
+await().atMost(1000, TimeUnit.MILLISECONDS)
+        .until(
+                () -> assertThat(subscriber.consumedElements)
+                        .containsExactlyElementsOf(items)
+        )
+
+*/
+
 /*
 Flow.Subscriber subs = {
     def onSubscribe (Flow.Subscription subscrip) {
