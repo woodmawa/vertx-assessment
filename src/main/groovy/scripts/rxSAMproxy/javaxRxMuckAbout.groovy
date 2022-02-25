@@ -62,11 +62,9 @@ publisher.subscribe(subscriber)
 
 println "subscribers : " + publisher.getNumberOfSubscribers()
 
-println "-- publisher submit data "
-//publisher.submit("hello")
-//publisher.submit("world")
+println "--> publisher submit data "
 ["hello", "world"].each {publisher.submit(it)}
-println "-- publisher close()"
+println "--> publisher close()"
 publisher.close()
 
 //sleep(1000)
