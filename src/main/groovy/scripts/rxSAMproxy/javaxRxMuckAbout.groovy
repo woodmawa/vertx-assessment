@@ -105,17 +105,6 @@ iter.each {println it}
 
  */
 
-/*
-interface Thing {
-    def onSubscribe (subs)
-    def onNext (value)
-}
 
-Thing thing = proxy as Thing
-
-def receiver (Thing anyold) {
-    anyold.onNext (10)
-}
-*/
 //Flow.Subscriber subscriber = proxy.asType (Flow.Subscriber)
 
