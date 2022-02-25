@@ -92,13 +92,6 @@ Awaitility.await()
 
 
 
-/*
-Flow.Subscriber subs = {
-    def onSubscribe (Flow.Subscription subscrip) {
-        return {Flow.Subscription subscr -> subscription = subscr; subscription.request(1)}
-    }
-}
-*/
 
 //fails with pre processing
 /*
@@ -113,7 +106,3 @@ iter.each {println it}
 
 
  */
-
-
-//Flow.Subscriber subscriber = proxy.asType (Flow.Subscriber)
-
