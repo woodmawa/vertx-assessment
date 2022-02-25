@@ -67,8 +67,6 @@ println "--> publisher submit data "
 println "--> publisher close()"
 publisher.close()
 
-//sleep(1000)
-
 Awaitility.await().atMost(1000, TimeUnit.MILLISECONDS)
         .until {
             //{subscriber.consumedElements == ["hello", "world"]}
