@@ -79,7 +79,8 @@ publisher.closeExceptionally(new Exception("forced error "))
 
 assert publisher.isClosed()
 
-Awaitility.await().atMost(1000, TimeUnit.MILLISECONDS)
+Awaitility.await()
+        .atMost(1000, TimeUnit.MILLISECONDS)
         .until {
             //{subscriber.consumedElements == ["hello", "world"]}
             assertThat(subscriber.consumedElements)
