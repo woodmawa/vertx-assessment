@@ -38,14 +38,20 @@ public class MySubscriber implements Flow.Subscriber {
 
     @Override
     void onNext(Object item) {
-        println "\t>>Subscriber::onNext: got next item $item"
-        consumedElements << item
-        subscription.request(1)
+        if (item instanceof Throwable) {
+            println "\t>>Subscriber::onNext: got passed an exception  $item"
+
+        } else {
+            println "\t>>Subscriber::onNext: got next item $item"
+            consumedElements << item
+            subscription.request(1)
+        }
     }
 
     @Override
     void onError(Throwable throwable) {
-        println "\t>>Subscriber::onError: got $throwable"
+        println "\t>>Subscriber::onError: got $throwable, cancel subscription $subscription"
+        subscription.cancel()
 
     }
 
@@ -64,8 +70,14 @@ println "subscribers : " + publisher.getNumberOfSubscribers()
 
 println "--> publisher submit data "
 ["hello", "world"].each {publisher.submit(it)}
-println "--> publisher close()"
-publisher.close()
+publisher.submit(new Exception("forced error "))
+
+publisher.submit "william" //wont be processed because you pushed an exception before
+
+println "--> publisher close with exception ()"
+publisher.closeExceptionally(new Exception("forced error "))
+
+assert publisher.isClosed()
 
 Awaitility.await().atMost(1000, TimeUnit.MILLISECONDS)
         .until {
