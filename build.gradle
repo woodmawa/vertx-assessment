@@ -53,6 +53,10 @@ dependencies {
     implementation group: 'io.vertx', name: 'vertx-circuit-breaker', version: "$vertxVersion"
     compileOnly "io.vertx:vertx-rx-java3:$vertxVersion"
 
+    //normally included as test dependency - i'm using in script evaluation async test
+    implementation group: 'org.awaitility', name: 'awaitility', version: '4.1.1'
+    implementation group: 'org.assertj', name: 'assertj-core', version: '3.22.0'
+
     testImplementation group: 'io.vertx', name: 'vertx-unit', version: "$vertxVersion"
     testCompileOnly "io.vertx:vertx-rx-java3:$vertxVersion"
 

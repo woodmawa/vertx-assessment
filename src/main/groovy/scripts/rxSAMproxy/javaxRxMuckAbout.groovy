@@ -1,10 +1,13 @@
 package scripts.rxSAMproxy
 
+import org.awaitility.Awaitility
 
 import java.util.concurrent.Flow
 
 import java.util.concurrent.SubmissionPublisher
+import java.util.concurrent.TimeUnit
 
+import static org.assertj.core.api.Assertions.*
 
 
 List consumedElements = new LinkedList<>()
@@ -65,15 +68,20 @@ publisher.submit("world")
 println "-- publisher close()"
 publisher.close()
 
-sleep(1000)
-/*
-await().atMost(1000, TimeUnit.MILLISECONDS)
-        .until(
-                () -> assertThat(subscriber.consumedElements)
-                        .containsExactlyElementsOf(items)
-        )
+//sleep(1000)
 
-*/
+Awaitility.await().atMost(1000, TimeUnit.MILLISECONDS)
+        .until {
+            //{subscriber.consumedElements == ["hello", "world"]}
+            assertThat(subscriber.consumedElements)
+                    .hasSize(2)
+                    .containsExactlyInAnyOrder("hello", "world")
+                    .any { it.isEqualTo(["hello", "world"]) }
+
+
+        }
+
+
 
 /*
 Flow.Subscriber subs = {
