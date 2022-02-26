@@ -91,7 +91,8 @@ Awaitility.await()
         }
 
 
-
+Awaitility.waitAtMost(1000, TimeUnit.MILLISECONDS)
+.until {println "add assertion here "; true}
 
 //fails with pre processing
 /*
