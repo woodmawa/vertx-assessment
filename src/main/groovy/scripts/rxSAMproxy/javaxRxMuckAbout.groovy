@@ -81,11 +81,11 @@ assert publisher.isClosed()
 
 Awaitility.await()
         .atMost(1000, TimeUnit.MILLISECONDS)
-        .until {
+        .untilAsserted {
             assertThat(subscriber.consumedElements)
                     .hasSize(2)
                     .containsExactlyInAnyOrder("hello", "world")
-                    .any { it.isEqualTo(["hello", "world"]) }
+                    //.any { it.isEqualTo(["hello", "world"]) }
 
 
         }
