@@ -140,7 +140,7 @@ Future then = future >> {it.toUpperCase()} >> {it.toLowerCase()}
 }*/
 
 
-def value = then.getValue () //(300, TimeUnit.MILLISECONDS)
+def value = then.getValue () //or timedout version (300, TimeUnit.MILLISECONDS)
 println "script: then result " + then.result() +  "  blocking get : ${value}"  // with blocking poll got getResult(300, TimeUnit.MILLISECONDS)
 
 vertx.close()
