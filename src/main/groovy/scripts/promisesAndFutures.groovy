@@ -63,6 +63,7 @@ Future.metaClass{
             }
         }
         //blocking get
+        println "blocking get on queue size ${result.size()}"
         def value = result.take ()
         result.remove(value)
         value
@@ -79,6 +80,7 @@ Future.metaClass{
             }
         }
 
+        println "polling get on queue $timeout, $units,  size ${result.size()}"
         def value  = result.poll (timeout, units)
         if (value)
             result.remove(value)
@@ -132,7 +134,7 @@ Future then = future.compose {String res ->
 Future then = future >> {it.toUpperCase()} >> {it.toLowerCase()}
 
 
-sleep (300 )
+//sleep (300 )
 
 /*then.flatMap {ar ->
     println "then flatmap result " + ar
@@ -146,10 +148,11 @@ then.onFailure{
     println "got exception $it"
 }
 
-then.onComplete {ar ->
+/*then.onComplete {ar ->
     println "script: next future.onComplete(): got result : ${ar.result()}"
-}
+}*/
 
-println "script: then result " + then.result() +  "  blocking get : ${then.value}"  // with blocking poll got getResult(300, TimeUnit.MILLISECONDS)
+def value = then.getValue(300, TimeUnit.MILLISECONDS)
+println "script: then result " + then.result() +  "  blocking get : ${value}"  // with blocking poll got getResult(300, TimeUnit.MILLISECONDS)
 
 vertx.close()
