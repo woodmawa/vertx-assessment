@@ -7,28 +7,83 @@ import io.vertx.core.Promise
 import io.vertx.core.Vertx
 import io.vertx.core.Future
 
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Flow
+import java.util.concurrent.TimeUnit
 
 Vertx vertx = Vertx.vertx()
 
-Future.metaClass.then = {closure ->
-    Future future =  delegate
+//use metaclass DSL
+Future.metaClass{
+    then = {closure ->
+        Future current =  delegate
+        Future next
 
-    future.onComplete {ar ->
-        Context ctx = Vertx.vertx().getOrCreateContext()
-        def ordered = true
-        println "\treceived result [${ar.result()}]"
-        composeResult = ctx.executeBlocking({closure(ar.result()) }, ordered)  //returns new future
+        /*
+         * used by executeBlocking which will call this with a promise
+         */
+        Closure blockingWrapper = {Promise promise ->
+            current.onComplete {ar ->
+                def currentResult
+                if (ar.succeeded()) {
+                    try {
+                        Context ctx = Vertx.vertx().getOrCreateContext()
+                        currentResult = ar.result()
+                        promise.complete(closure.call(currentResult))
+                    } catch (InterruptedException ex) {
+                        promise.fail (ex)
+                    }
+                } else {
+                    promise.fail(ar.cause())
+                }
+             }
+        }
+
+        //execute blocking wrapper on worker thread and  return new future
+        next = vertx.executeBlocking(blockingWrapper)  //runs new closure on worker thread, returns new future
+
+        println "\t>>then: current (${current.hashCode()}), next(${next.hashCode()})"
+        next
     }
 
-   // Promise promise = Promise.promise()
+    rightShift << {closure ->
+        //println "rightShift has closure [${closure.hashCode()}], call then "
+        then (closure)
+    }
 
-    //run the closure on another thread
-    //AsyncSingleResultPublisher arp = new AsyncSingleResultPublisher<>(closure)
-    //Flow.Subscriber sub = Promise::handle
-    //arp.subscribe(sub)
+    getValue <<  {
+        Reference ref = new Reference ()
+        BlockingQueue result = new ArrayBlockingQueue<>(10)
+        delegate.onComplete {ar ->
+            if (ar.succeeded()) {
+                result.put (ar.result()) //blocking put
+            } else {
+                throw ar.cause()
+            }
+        }
+        //blocking get
+        def value = result.take ()
+        result.remove(value)
+        value
+    }
 
+    getValue <<  {timeout, units ->
+        Reference ref = new Reference ()
+        BlockingQueue result = new ArrayBlockingQueue<>(5)
+        delegate.onComplete {ar ->
+            if (ar.succeeded()) {
+                result.put (ar.result())
+            } else {
+                throw ar.cause()
+            }
+        }
 
+        def value  = result.poll (timeout, units)
+        if (value)
+            result.remove(value)
+        value
+    }
 }
 
 Future handler (Promise p) {
@@ -58,7 +113,7 @@ Future wrapper (vertx) {
 Future future  = wrapper(vertx)
 
 future.onComplete({AsyncResult ar ->
-    println "future.onComplete(): got result : ${ar.result()}"
+    println "script: original future.onComplete(): got result : ${ar.result()}"
 })
 
 
@@ -73,9 +128,28 @@ Future then = future.compose {String res ->
     p.future()
 }*/
 
-Future then = future.then {it.toUpperCase()}
+//Future then = future.then {it.toUpperCase()}.then {it.toLowerCase()}
+Future then = future >> {it.toUpperCase()} >> {it.toLowerCase()}
 
 
 sleep (300 )
-println "then result " + then.result()
+
+/*then.flatMap {ar ->
+    println "then flatmap result " + ar
+}*/
+then.onSuccess {
+    //cant see this get run
+    println ">then onSuccess result: " + then.result()
+}
+then.onFailure{
+    //cant see this get run
+    println "got exception $it"
+}
+
+then.onComplete {ar ->
+    println "script: next future.onComplete(): got result : ${ar.result()}"
+}
+
+println "script: then result " + then.result() +  "  blocking get : ${then.value}"  // with blocking poll got getResult(300, TimeUnit.MILLISECONDS)
+
 vertx.close()
