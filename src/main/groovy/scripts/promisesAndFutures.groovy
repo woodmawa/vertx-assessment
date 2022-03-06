@@ -57,15 +57,15 @@ Future.metaClass{
         BlockingQueue result = new ArrayBlockingQueue<>(5)
         delegate.onComplete {ar ->
             if (ar.succeeded()) {
+                //println "\t>getValue() completed future with " + ar.result()
                 result.put (ar.result()) //blocking put
             } else {
                 throw ar.cause()
             }
         }
         //blocking get
-        //println "blocking get on queue size ${result.size()}"
         def value = result.take ()
-        result.remove(value)
+        println "\t>getValue() blocking get(),  read $value"
         value
     }
 
@@ -118,6 +118,15 @@ future.onComplete({AsyncResult ar ->
     println "script: original future.onComplete(): got result : ${ar.result()}"
 })
 
+
+
+Future tf = vertx.executeBlocking{it.complete("\t> hello william") }
+tf.onSuccess{it-> println "tf onSuccess: ${it.call()}" }
+println "script: read tf value as " + tf.getValue()
+
+Future tf2 = tf.map{it -> println "map called with $it"; it.toUpperCase()}
+tf2.onSuccess{println "onSuccess: " + it.call()}
+tf2.onFailure{it.printStackTrace()}
 
 sleep (300)
 /*
