@@ -118,6 +118,15 @@ future.onComplete({AsyncResult ar ->
     println "script: original future.onComplete(): got result : ${ar.result()}"
 })
 
+Promise promise = Promise.promise()
+Future sf = promise.future()
+//sf.onSuccess{Object res -> println "-> script: got object $res" }
+//sf.onFailure(Throwable::printStackTrace)
+sf.onComplete{ar ->
+    println "sf completed with ${ar.result()}"
+}
+sleep (300)
+promise.complete("object completed with OK")
 
 
 Future tf = vertx.executeBlocking{it.complete("\t> hello william") }
