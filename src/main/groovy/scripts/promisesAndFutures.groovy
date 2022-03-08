@@ -86,6 +86,34 @@ Future.metaClass{
             result.remove(value)
         value
     }
+
+    /*
+     * transform this future using the supplied closure
+     */
+    trans << {Closure clos ->
+        assert clos, "trans: closure cannot be null"
+        Closure clone = clos.clone()
+        Future future = delegate
+        Promise promise = Promise.promise()
+
+        assert future, "trans: delegate shouldn be null"
+        def inputValue
+
+        if (future.succeeded()) {
+            inputValue = future.result()
+            try {
+                def result = clone(inputValue)
+                promise.complete(result)
+            } catch (Throwable exc) {
+                promise.fail(exc)
+            }
+        } else {
+            promise.fail(future.cause())
+        }
+
+        promise.future()
+    }
+
 }
 
 Future handler (Promise p) {
@@ -134,10 +162,53 @@ tf.onSuccess{it-> println "tf onSuccess: ${it.call()}" }
 println "script: read tf value as " + tf.getValue()
 
 Future tf2 = tf.map{it -> println "map called with $it"; it.toUpperCase()}
-tf2.onSuccess{println "onSuccess: " + it.call()}
+tf2.onSuccess{Closure it ->
+    println "future map then onSuccess: " + it.call()
+}
 tf2.onFailure{it.printStackTrace()}
 
-sleep (300)
+
+
+Promise p3 = Promise.promise()
+Future tf3 = p3.future()
+
+p3.complete ("lower")
+/*Future mappedTf3 = tf3.map { String val ->
+    Future f = Future.future()
+    f.map "lower -> UPPER"
+}*/
+Future mappedTf3 = tf3.compose{String str -> def mapped = str.toUpperCase()
+def p = Promise.promise()
+p.complete (mapped)
+p.future()
+}
+
+Future mappedTf5 = mappedTf3.trans {String val ->
+    val.reverse()
+
+}
+
+Future mappedTf4 = mappedTf3.flatMap {String str ->
+    def mapped = str.reverse()
+    def p = Promise.promise()
+    p.complete (mapped)
+    p.future()
+}
+
+mappedTf4.onComplete {ar ->
+    //def resClos = ar.result()
+    def res = ar.result()
+    println "\t>tf4: final mapped result was $res "
+}
+
+
+mappedTf5.onComplete {ar ->
+    //def resClos = ar.result()
+    def res = ar.result()
+    println "\t>tf5: trans() final mapped result was $res "
+}
+
+//sleep (300)
 /*
 Future then = future.compose {String res ->
     //compose must return a new future, with result of compose action
