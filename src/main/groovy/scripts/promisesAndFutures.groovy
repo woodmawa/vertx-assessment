@@ -96,7 +96,7 @@ Future.metaClass{
         Future future = delegate
         Promise promise = Promise.promise()
 
-        assert future, "trans: delegate shouldn be null"
+        assert future, "trans: delegate shouldn't be null"
         def inputValue
 
         if (future.succeeded()) {
